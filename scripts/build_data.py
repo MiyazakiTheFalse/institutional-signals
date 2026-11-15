@@ -40,6 +40,8 @@ def require_utc(value: str, field: str) -> datetime:
 
 
 def validate_and_export() -> dict:
+    from coverage import evaluate_cases
+    from upload_requests import requests_for
     sources = read_json("source_registry.json")
     observations = read_json("observations.json")
     forecasts = read_json("forecasts.json")
@@ -100,6 +102,11 @@ def validate_and_export() -> dict:
             if not isinstance(outcome_refs, list) or not outcome_refs or not set(outcome_refs).issubset(src_ids):
                 raise ValueError(f"Resolved forecast needs valid outcome references: {row['id']}")
 
+    cases = json.loads((ROOT / 'config/case_dependencies.json').read_text(encoding='utf-8'))
+    collection_sources = json.loads((ROOT / 'config/collection.json').read_text(encoding='utf-8'))
+    reviewed = read_json('reviewed_evidence.json')
+    # Static export never claims to know live R2 check state.
+    gates = evaluate_cases(cases, collection_sources, {}, reviewed, datetime(2026, 11, 15, tzinfo=timezone.utc))
     return {
         "project": "Institutional Signals",
         "dataset_version": "0.1",
@@ -108,6 +115,8 @@ def validate_and_export() -> dict:
         "sources": sorted(sources, key=lambda s: (s["published_at"], s["id"]), reverse=True),
         "observations": sorted(observations, key=lambda r: (r["date"], r["id"]), reverse=True),
         "forecasts": sorted(forecasts, key=lambda r: r["created_at"], reverse=True),
+        "upload_requests": requests_for(cases, gates),
+        "readiness_mode": "static_requirements_only_not_live_coverage",
     }
 
 

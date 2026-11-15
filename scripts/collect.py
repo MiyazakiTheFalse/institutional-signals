@@ -21,6 +21,8 @@ from urllib.request import Request, urlopen
 from urllib.robotparser import RobotFileParser
 
 from freshness import source_health, required_source_coverage
+from coverage import evaluate_cases
+from upload_requests import requests_for
 
 ROOT = Path(__file__).resolve().parents[1]
 AGENT = 'InstitutionalSignals/0.2 (+https://github.com/MiyazakiTheFalse/institutional-signals)'
@@ -283,8 +285,14 @@ def main():
     store = R2Store() if args.store == 'r2' else LocalStore(args.local_dir)
     sources = load_sources(args.config)
     report = collect(sources, store, SourceTransport(sources))
+    dependencies = json.loads((ROOT / 'config/case_dependencies.json').read_text(encoding='utf-8'))
+    reviewed = json.loads((ROOT / 'data/reviewed_evidence.json').read_text(encoding='utf-8'))
+    gates = evaluate_cases(dependencies, sources, report['sources'], reviewed, datetime.now(timezone.utc))
+    store.put('status/case-readiness.json.gz', packed(gates))
+    store.put('status/upload-requests.json.gz', packed(requests_for(dependencies, gates)))
     print(json.dumps({'checked_at': report['checked_at'], 'changed': len(report['events']),
                       'health': report['health'], 'coverage': report['coverage'],
+                      'case_readiness': gates,
                       'source_errors': {sid: row['last_error'] for sid, row in report['sources'].items()
                                         if row.get('last_error')}}, indent=2))
     return 0 if report['coverage']['safe_to_claim_current'] else 1

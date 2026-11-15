@@ -4,6 +4,9 @@ on:
     paths:
       - config/collection.json
       - scripts/collect.py
+      - scripts/coverage.py
+      - config/case_dependencies.json
+      - data/reviewed_evidence.json
   schedule:
     - cron: '13,43 * * * *'
   workflow_dispatch:

@@ -128,5 +128,78 @@
       "status": "documented_report"
     }
   ],
-  "forecasts": []
+  "forecasts": [],
+  "upload_requests": [
+    {
+      "request_id": "thames-water-restructuring:company-financing",
+      "case_id": "thames-water-restructuring",
+      "requirement_id": "company-financing",
+      "document": "Reviewed company financing announcement",
+      "why": "Required before this case can issue or update a forecast.",
+      "capability": "financing_announcement",
+      "source_ids": [
+        "TW-2026-11-09"
+      ],
+      "accepted_formats": [
+        "pdf"
+      ],
+      "instructions": "Download the original from its publisher. Include the original source URL and publication date. Do not include unrelated personal information.",
+      "max_size_bytes": 10485760,
+      "status": "awaiting_reviewed_current_content"
+    },
+    {
+      "request_id": "thames-water-restructuring:parliament-report",
+      "case_id": "thames-water-restructuring",
+      "requirement_id": "parliament-report",
+      "document": "Full parliamentary report content",
+      "why": "Required before this case can issue or update a forecast.",
+      "capability": "parliament_report_body",
+      "source_ids": [
+        "PARL-2026-09"
+      ],
+      "accepted_formats": [
+        "pdf"
+      ],
+      "instructions": "Download the original from its publisher. Include the original source URL and publication date. Do not include unrelated personal information.",
+      "max_size_bytes": 10485760,
+      "status": "awaiting_reviewed_current_content"
+    },
+    {
+      "request_id": "thames-water-restructuring:regulator-performance",
+      "case_id": "thames-water-restructuring",
+      "requirement_id": "regulator-performance",
+      "document": "Comparable Ofwat performance data",
+      "why": "Required before this case can issue or update a forecast.",
+      "capability": "ofwat_performance_dataset",
+      "source_ids": [
+        "OFWAT-2026"
+      ],
+      "accepted_formats": [
+        "pdf",
+        "csv"
+      ],
+      "instructions": "Download the original from its publisher. Include the original source URL and publication date. Do not include unrelated personal information.",
+      "max_size_bytes": 10485760,
+      "status": "awaiting_reviewed_current_content"
+    },
+    {
+      "request_id": "thames-water-restructuring:joint-regulator-context",
+      "case_id": "thames-water-restructuring",
+      "requirement_id": "joint-regulator-context",
+      "document": "Joint regulator report content",
+      "why": "Required before this case can issue or update a forecast.",
+      "capability": "joint_regulator_report_body",
+      "source_ids": [
+        "GOV-JOINT-2026",
+        "GOV-JOINT-PDF"
+      ],
+      "accepted_formats": [
+        "pdf"
+      ],
+      "instructions": "Download the original from its publisher. Include the original source URL and publication date. Do not include unrelated personal information.",
+      "max_size_bytes": 10485760,
+      "status": "awaiting_reviewed_current_content"
+    }
+  ],
+  "readiness_mode": "static_requirements_only_not_live_coverage"
 }
