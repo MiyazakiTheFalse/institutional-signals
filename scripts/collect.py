@@ -244,7 +244,9 @@ def main():
     store = R2Store() if args.store == 'r2' else LocalStore(args.local_dir)
     report = collect(load_sources(args.config), store, PoliteFetch())
     print(json.dumps({'checked_at': report['checked_at'], 'changed': len(report['events']),
-                      'health': report['health'], 'coverage': report['coverage']}, indent=2))
+                      'health': report['health'], 'coverage': report['coverage'],
+                      'source_errors': {sid: row['last_error'] for sid, row in report['sources'].items()
+                                        if row.get('last_error')}}, indent=2))
     return 0 if report['coverage']['safe_to_claim_current'] else 1
 
 
