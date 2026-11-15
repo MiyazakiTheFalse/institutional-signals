@@ -4,7 +4,7 @@ Institutional Signals is an Electron application. The desktop frontend is bundle
 
 ## Build installers
 
-GitHub: **Actions → Desktop installers → Run workflow**, select `main`. The workflow runs validation and packaging on native Windows, macOS, and Linux hosted runners. Successful runs produce separate **Artifacts** called `institutional-signals-windows`, `institutional-signals-macos`, and `institutional-signals-linux`. Download and extract each ZIP to get its installers. Failed jobs do not upload a valid installer.
+GitHub: **Actions → Desktop installers → Run workflow**, select `main`. A push to `main` that modifies desktop build files or the desktop-release workflow also triggers these native builds. Ordinary documentation or PR changes do not. The workflow runs validation and packaging on native Windows, macOS, and Linux hosted runners. Successful runs produce separate **Artifacts** called `institutional-signals-windows`, `institutional-signals-macos`, and `institutional-signals-linux`. Download and extract each ZIP to get its installers. Failed jobs do not upload a valid installer.
 
 To create a public release, create and push a version tag of the form `v0.2.0` (use a new version for subsequent releases). The workflow assembles a **draft GitHub Release** from the platform artifacts. Review the assets before publishing it.
 
