@@ -3,8 +3,16 @@ name: Desktop installers
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
+    paths:
+      - '.github/workflows/desktop-release.yml'
+      - 'desktop/**'
+      - 'electron-builder.cjs'
+      - 'package.json'
+      - 'package-lock.json'
 
 permissions:
   contents: read
@@ -34,6 +42,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Check repository hygiene
+        run: python scripts/quality_gate.py
       - name: Verify curated dataset
         run: python scripts/build_data.py --check
       - name: Run Python tests
@@ -54,7 +64,7 @@ jobs:
           name: institutional-signals-${{ matrix.artifact }}
           path: release/*
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 1
 
   publish:
     name: Publish GitHub release
