@@ -12,14 +12,16 @@ These are unsigned development builds, not production-trusted installers. Do not
 2. Read the first-run guide.
 3. Browse the bundled source library and timeline.
 4. Inspect named evidence requirements.
-5. Choose a requested PDF or CSV using the operating-system file picker.
+5. Provide the original publisher URL and publication date, then choose the requested PDF or CSV.
 6. Validate and store it in the application's private local quarantine directory.
-7. Report that the file remains local, unscanned and unapproved.
+7. Connect an operator-provisioned workspace using an individual invitation key, then submit the document to cloud quarantine.
+8. Inspect collector health, live missing-evidence requests, submission receipts and review history. Reviewer-role users can append change requests or rejections.
+9. Explore the institutional graph by entity and historical cutoff; inspect provenance and briefing summaries. Empty graph relationships are explicitly marked as unreviewed/missing.
 
-The sandboxed renderer has no Node access. Its preload exposes only version lookup and bounded request-specific file import. Main-process handlers validate the caller and request against bundled configuration. Uploaded filenames never become storage paths. User documents are not executed, rendered or sent to an AI model. API credentials are never bundled.
+The sandboxed renderer has no Node access. Its preload exposes a narrow set of import, workspace and review operations; main-process handlers validate their caller. The server validates all uploads and reviewer permissions independently. Uploaded filenames never become storage paths. User documents are not executed, rendered or sent to an AI model. R2 credentials are never bundled. Invitation keys use operating-system encrypted storage where available and otherwise remain in memory only.
 
 ## Remaining end-to-end work
 
-This build does **not** yet submit quarantined documents to Cloudflare, authenticate end users, connect desktop screens to live R2 readiness, run malware scanning, approve evidence, train a validated forecast model, or implement signed automatic updates. These are required before describing the entire product as complete. The server-side operator CLI, R2 collector and evidence readiness gate already exist separately.
+The desktop/cloud integration is implemented but needs a deployed and provisioned Worker to operate. The ClamAV scan and trusted operator promotion commands need a real uploaded-document integration test. No trained production forecast model, signed automatic updater or completed clean-machine installation certification is claimed. See PRODUCT_ACCEPTANCE.md for the current implementation/deployment distinction.
 
 Mac and Windows smoke tests start the real Electron app, load the bundled JSON, and verify the constrained preload bridge. Linux packaging and input tests run in CI; GUI installation testing on actual target devices remains necessary.

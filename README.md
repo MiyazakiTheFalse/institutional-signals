@@ -4,7 +4,13 @@
 
 > Research prototype, not an accusation engine or financial advice. Evidence is linked; hypotheses are labelled; forecasts have explicit resolution rules. No model performance is claimed before sufficient outcomes are recorded.
 
-## What works in this starter
+## First-pass product
+
+The implementation now includes cross-platform desktop packaging, provenance-aware imports, a submission queue, private R2 intake API, live collector status, operator scanning/review, a temporal institutional graph, and a gated experimental forecast core. See [product acceptance](docs/PRODUCT_ACCEPTANCE.md) for what is implemented versus deployed and verified. No trained predictive performance is claimed.
+
+The **Build desktop installers** Actions workflow produces Windows x64, Intel/Apple Silicon macOS, and Linux x64 development packages. The **Validate cloud service** workflow verifies Worker bundling without deploying or granting access. Deployment requires a scoped Cloudflare deployment credential and individually provisioned invitation keys.
+
+## Curated research foundation
 
 - Static React + TypeScript dashboard showing verified *source records*, event chronology, and forecast-register status.
 - Version-controlled source register and prediction protocol.

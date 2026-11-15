@@ -13,6 +13,7 @@ The authoritative scope is DESIGN.md plus ML_AND_FRESHNESS_ARCHITECTURE.md and t
 - Temporal institutional graph validation/replay, source independence and correction lineage, descriptive graph features and affected-decision traversal. UI provides institution selection, as-of date, provenance inspection and a factual briefing scaffold. The graph intentionally has no invented relationships.
 - Experimental baseline forecast generation with independent resolved-outcome minimum, no-future-information checks, immutable content-addressed snapshots, Brier/log-loss comparison and a conservative candidate screening gate. These are tested components, not a trained production model or automatically published forecast.
 - Operator ClamAV scan command/workflow and human verification command. Exact hashes and recent signatures are required; scanner errors fail closed. Verified manual evidence can fill unavailable collection routes for a bounded freshness interval, then expires back to hold.
+- Scheduled research orchestration consumes explicitly registered targets, matching outcome families and reviewed evidence, then stores immutable eligible baseline snapshots. Target/outcome registers are initially empty; no probability is invented to populate the dashboard.
 
 ## Release blockers (must not be represented as completed)
 

@@ -1,0 +1,28 @@
+name: Evaluate registered research cases
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23,53 * * * *'
+permissions:
+  contents: read
+concurrency:
+  group: institutional-signals-research
+  cancel-in-progress: false
+jobs:
+  evaluate:
+    if: vars.COLLECTION_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements-collection.txt
+      - run: python -m unittest discover -s tests -q
+      - run: python scripts/research_pipeline.py --store r2
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
