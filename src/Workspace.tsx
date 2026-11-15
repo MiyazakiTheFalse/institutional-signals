@@ -1,7 +1,9 @@
 import React from 'react'
 
-type Submission = { id: string; filename: string; state: string; scan_state: string; received_at: string }
-export type LiveStatus = { checked_at: string; fetched_at: string; stale: boolean; coverage: number; sources: { id: string; last_success_at?: string; consecutive_failures?: number }[] }
+type Review = { id: string; decision: string; note: string; reviewer: string; reviewed_at: string }
+type Submission = { id: string; owner?: string; filename: string; state: string; scan_state: string; received_at: string; source_url?: string; reviews?: Review[] }
+export type EvidenceRequest = { request_id: string; document: string; why: string; instructions: string; accepted_formats: string[] }
+export type LiveStatus = { checked_at: string; fetched_at: string; stale: boolean; coverage: number; upload_requests: EvidenceRequest[]; sources: { id: string; last_success_at?: string; consecutive_failures?: number }[] }
 declare global {
   interface Window {
     institutionalDesktop?: {
@@ -13,6 +15,8 @@ declare global {
       status: () => Promise<LiveStatus>
       localSubmissions: () => Promise<Submission[]>
       remoteSubmissions: () => Promise<{ items: Submission[]; cursor: string | null }>
+      submissionDetails: (id: string, owner: string) => Promise<Submission>
+      review: (id: string, review: { owner: string; decision: string; note: string }) => Promise<Review>
       submit: (id: string) => Promise<Submission>
     }
   }
@@ -44,7 +48,7 @@ export function ImportEvidence({ requestId }: { requestId: string }) {
   </div>
 }
 
-export function Workspace() {
+export function Workspace({ onStatus }: { onStatus: (status: LiveStatus | null) => void }) {
   const [url, setUrl] = React.useState('')
   const [token, setToken] = React.useState('')
   const [connected, setConnected] = React.useState(false)
@@ -53,19 +57,21 @@ export function Workspace() {
   const [status, setStatus] = React.useState<LiveStatus | null>(null)
   const [local, setLocal] = React.useState<Submission[]>([])
   const [remote, setRemote] = React.useState<Submission[]>([])
+  React.useEffect(() => { if (!connected) { setStatus(null); onStatus(null) } }, [connected, onStatus])
   async function refresh() {
     setLocal(await desktop().localSubmissions())
     const current = await desktop().connection(); setConnected(current.connected)
     if (current.connected) {
       const [live, submissions] = await Promise.all([desktop().status(), desktop().remoteSubmissions()])
       if (!Array.isArray(live.sources) || typeof live.checked_at !== 'string' || !Array.isArray(submissions.items)) throw new Error('Invalid workspace response')
-      setStatus(live); setRemote(submissions.items)
+      if (!Array.isArray(live.upload_requests) || live.upload_requests.some(r => typeof r.request_id !== 'string' || typeof r.document !== 'string' || typeof r.why !== 'string' || typeof r.instructions !== 'string' || !Array.isArray(r.accepted_formats) || r.accepted_formats.some(f => !['pdf','csv'].includes(f)))) throw new Error('Invalid evidence requests')
+      setStatus(live); onStatus(live); setRemote(submissions.items)
       setMessage(submissions.cursor ? 'Showing the first submission page. More records are available to the workspace operator.' : 'Workspace refreshed.')
     }
   }
   React.useEffect(() => {
     if (!window.institutionalDesktop) return
-    const update = () => { void refresh().catch(() => { setStatus(null); setMessage('Workspace unavailable. Your local documents are retained; retry when connected.') }) }
+    const update = () => { void refresh().catch(() => { setStatus(null); onStatus(null); setMessage('Workspace unavailable. Your local documents are retained; retry when connected.') }) }
     update(); window.addEventListener('evidence-imported', update)
     const timer = setInterval(update, 60000)
     return () => { clearInterval(timer); window.removeEventListener('evidence-imported', update) }
@@ -94,5 +100,23 @@ export function Workspace() {
       catch { setMessage('Submission was not confirmed. Your document is retained. Refresh and retry; the same submission ID prevents duplicates.') }
       finally { setBusy(false) }
     }}>Submit for review</button>}</article> })}
+    {connected && <details><summary>Cloud submissions and review history ({remote.length})</summary><p>Contributors see their own documents; reviewers see the shared queue. Approval stays disabled until scanning and evidence verification are connected.</p>{remote.map(row => <ReviewCard key={row.id} row={row} />)}</details>}
   </section>
+}
+
+function ReviewCard({ row }: { row: Submission }) {
+  const [detail, setDetail] = React.useState<Submission | null>(null)
+  const [note, setNote] = React.useState('')
+  const [message, setMessage] = React.useState('')
+  const [busy, setBusy] = React.useState(false)
+  const refresh = async () => setDetail(await desktop().submissionDetails(row.id, row.owner!))
+  return <article><h4>{row.filename}</h4><p>{row.state} · {row.scan_state}</p><button onClick={() => void refresh().catch(() => setMessage('Could not load review history.'))}>Inspect review history</button>
+    {detail && <><p>Publisher reference: {detail.source_url}</p>{detail.reviews?.map(r => <p key={r.id}><b>{r.decision.replaceAll('_', ' ')}</b> · {r.reviewed_at}<br/>{r.note}</p>)}<label>Reviewer explanation<input value={note} onChange={e => setNote(e.target.value)} maxLength={2000} /></label><div className="workspace-actions">{['needs_changes','rejected'].map(decision => <button key={decision} disabled={busy || note.trim().length < 3} onClick={async () => {
+      setBusy(true)
+      try { await desktop().review(row.id, { owner: row.owner!, decision, note }); await refresh(); setNote(''); setMessage('Review appended to the audit trail.') }
+      catch { setMessage('Review was not recorded. Reviewer access is required.') }
+      finally { setBusy(false) }
+    }}>{decision === 'needs_changes' ? 'Request changes' : 'Reject evidence'}</button>)}</div></>}
+    <p role="status">{message}</p>
+  </article>
 }

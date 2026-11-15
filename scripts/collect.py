@@ -58,6 +58,16 @@ class LocalStore:
 
 
 class R2Store:
+    def reviewed_manual(self):
+        rows = []
+        paginator = self.client.get_paginator('list_objects_v2')
+        for page in paginator.paginate(Bucket=self.bucket, Prefix='reviewed/manual/'):
+            for item in page.get('Contents', []):
+                if len(rows) >= 10000: raise ValueError('Manual review index requires compaction')
+                if item['Key'].endswith('.json.gz'):
+                    rows.append(json.loads(gzip.decompress(self.get(item['Key']))))
+        return rows
+
     def __init__(self):
         import boto3
         from botocore.config import Config
@@ -287,6 +297,8 @@ def main():
     report = collect(sources, store, SourceTransport(sources))
     dependencies = json.loads((ROOT / 'config/case_dependencies.json').read_text(encoding='utf-8'))
     reviewed = json.loads((ROOT / 'data/reviewed_evidence.json').read_text(encoding='utf-8'))
+    if args.store == 'r2':
+        reviewed.extend(store.reviewed_manual())
     gates = evaluate_cases(dependencies, sources, report['sources'], reviewed, datetime.now(timezone.utc))
     store.put('status/case-readiness.json.gz', packed(gates))
     store.put('status/upload-requests.json.gz', packed(requests_for(dependencies, gates)))

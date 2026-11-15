@@ -14,6 +14,9 @@ input { width:100%; padding:12px; background:#0e1820; color:#edf6fb; border:1px 
 .forecast-panel article { border-top:1px solid #344c4c; padding:20px 0; overflow-wrap:anywhere; }
 .forecast-panel li { line-height:1.8; font-size:13px; }
 .import-evidence { margin-top:18px; }
+select { padding:12px; background:#0e1820; color:#edf6fb; border:1px solid #536574; border-radius:6px; font:inherit; margin:12px 0; }
+input[type=checkbox] { width:auto; justify-self:start; }
+details { padding:16px 0; } summary { cursor:pointer; color:#9cdec8; }
 .site-header { padding: 23px max(5%, calc((100% - 1180px)/2)); display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #26303d; }
 .brand { display:flex; gap:13px; align-items:center; color:#f1f4f8; letter-spacing: .12em; font-size:12px; text-decoration:none; }
 .brand b {font-weight:700}

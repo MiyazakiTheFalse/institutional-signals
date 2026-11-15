@@ -1,0 +1,8 @@
+{
+  "version": "0.1",
+  "nodes": [
+    {"id":"thames-water","type":"institution","label":"Thames Water"},
+    {"id":"ofwat","type":"public_body","label":"Ofwat"}
+  ],
+  "edges": []
+}

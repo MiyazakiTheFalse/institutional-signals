@@ -28,6 +28,15 @@ def evaluate(requirements, sources, state, reviewed, now):
                        and r['review_state'] == 'verified'
                        and requirement['capability'] in r['capabilities']]
             valid = health['status'] == 'current' and bool(matches)
+            manual = [r for r in reviewed if r.get('origin') == 'manual' and r['source_id'] == sid
+                      and r['review_state'] == 'verified' and r.get('scan_state') == 'clean'
+                      and r.get('scan_sha256') == r['sha256']
+                      and utc(r['available_at']) <= now and utc(r['reviewed_at']) <= now < utc(r['valid_until'])
+                      and (utc(r['valid_until']) - utc(r['reviewed_at'])).total_seconds() <= min(1440, source['poll_target_minutes'] * 3) * 60
+                      and requirement['capability'] in r['capabilities']]
+            if manual:
+                matches = sorted(manual, key=lambda r: r['reviewed_at'])
+                valid = True
             reasons.append({'source_id': sid, 'health': health['status'],
                             'reason': 'accepted' if valid else 'stale_or_unavailable' if health['status'] != 'current'
                             else 'current_content_not_verified_for_requirement'})

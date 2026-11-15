@@ -8,6 +8,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
+from knowledge_graph import validate as validate_graph
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
@@ -107,6 +108,8 @@ def validate_and_export() -> dict:
     reviewed = read_json('reviewed_evidence.json')
     # Static export never claims to know live R2 check state.
     gates = evaluate_cases(cases, collection_sources, {}, reviewed, datetime(2026, 11, 15, tzinfo=timezone.utc))
+    graph = json.loads((DATA / 'knowledge_graph.json').read_text(encoding='utf-8'))
+    validate_graph(graph, src_ids)
     return {
         "project": "Institutional Signals",
         "dataset_version": "0.1",
@@ -117,6 +120,7 @@ def validate_and_export() -> dict:
         "forecasts": sorted(forecasts, key=lambda r: r["created_at"], reverse=True),
         "upload_requests": requests_for(cases, gates),
         "readiness_mode": "static_requirements_only_not_live_coverage",
+        "knowledge_graph": graph,
     }
 
 

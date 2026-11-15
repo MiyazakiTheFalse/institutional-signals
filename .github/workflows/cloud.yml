@@ -1,0 +1,22 @@
+name: Validate cloud service
+on:
+  push:
+    paths: ['cloud/**', 'desktop/validation.cjs', 'desktop/provenance.cjs', '.github/workflows/cloud.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: node --test cloud/test-worker.mjs
+      - run: npx --yes wrangler@4 deploy --dry-run --config cloud/wrangler.jsonc --outdir cloud-bundle
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cloud-worker-bundle
+          path: cloud-bundle/

@@ -1,0 +1,33 @@
+name: Scan quarantined evidence
+on:
+  workflow_dispatch:
+    inputs:
+      owner:
+        required: true
+        type: string
+      submission:
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements-collection.txt
+      - run: sudo apt-get update && sudo apt-get install -y clamav
+      - run: sudo freshclam
+      - name: Scan exact quarantined bytes
+        env:
+          OWNER: ${{ inputs.owner }}
+          SUBMISSION: ${{ inputs.submission }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: python scripts/scan_quarantine.py --owner "$OWNER" --submission "$SUBMISSION"

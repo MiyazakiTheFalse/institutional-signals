@@ -201,5 +201,21 @@
       "status": "awaiting_reviewed_current_content"
     }
   ],
-  "readiness_mode": "static_requirements_only_not_live_coverage"
+  "readiness_mode": "static_requirements_only_not_live_coverage",
+  "knowledge_graph": {
+    "version": "0.1",
+    "nodes": [
+      {
+        "id": "thames-water",
+        "type": "institution",
+        "label": "Thames Water"
+      },
+      {
+        "id": "ofwat",
+        "type": "public_body",
+        "label": "Ofwat"
+      }
+    ],
+    "edges": []
+  }
 }

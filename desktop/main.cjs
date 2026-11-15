@@ -58,6 +58,16 @@ app.whenReady().then(async () => {
   ipcMain.handle('evidence:list', event => { caller(event); return cloud.listLocal() })
   ipcMain.handle('evidence:submit', (event, id) => { caller(event); return cloud.submit(id) })
   ipcMain.handle('evidence:remote', event => { caller(event); return cloud.call('/v1/submissions') })
+  ipcMain.handle('evidence:details', (event, id, owner) => {
+    caller(event)
+    if (!/^[a-f0-9-]{36}$/.test(id) || !/^[a-zA-Z0-9_-]{1,64}$/.test(owner)) throw new Error('Invalid submission')
+    return cloud.call('/v1/submissions/' + id + '?owner=' + owner)
+  })
+  ipcMain.handle('evidence:review', (event, id, review) => {
+    caller(event)
+    if (!/^[a-f0-9-]{36}$/.test(id)) throw new Error('Invalid submission')
+    return cloud.call('/v1/submissions/' + id + '/review', { method: 'POST', body: JSON.stringify(review), headers: { 'Content-Type': 'application/json' } })
+  })
   ipcMain.handle('evidence:import', async (event, requestId, input) => {
     caller(event)
     const metadata = validateProvenance(input)

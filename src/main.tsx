@@ -1,7 +1,8 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles.css'
-import { ImportEvidence, Workspace } from './Workspace'
+import { ImportEvidence, Workspace, type LiveStatus } from './Workspace'
+import { Research, type Graph } from './Research'
 
 type Source = {
   id: string; title: string; publisher: string; published_at: string;
@@ -16,7 +17,7 @@ type Forecast = {
   probability: number | null; close_at: string
 }
 type UploadRequest = { request_id: string; document: string; why: string; instructions: string; accepted_formats: string[] }
-type Dataset = { as_of: string; notice: string; sources: Source[]; observations: Observation[]; forecasts: Forecast[]; upload_requests: UploadRequest[] }
+type Dataset = { as_of: string; notice: string; sources: Source[]; observations: Observation[]; forecasts: Forecast[]; upload_requests: UploadRequest[]; knowledge_graph: Graph }
 
 function safeLink(value: string): string | undefined {
   try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password ? u.href : undefined }
@@ -32,12 +33,14 @@ function validateDataset(value: unknown): Dataset {
   }
   if (d.sources.some(s => !s || typeof s.id !== 'string' || typeof s.url !== 'string' || !safeLink(s.url))) throw new Error('Invalid source link')
   if (d.upload_requests.some(r => !r || typeof r.document !== 'string' || typeof r.instructions !== 'string' || !Array.isArray(r.accepted_formats))) throw new Error('Invalid upload request')
+  if (!d.knowledge_graph || !Array.isArray(d.knowledge_graph.nodes) || !Array.isArray(d.knowledge_graph.edges)) throw new Error('Invalid graph')
   return d
 }
 
 function App() {
   const [data, setData] = React.useState<Dataset | null>(null)
   const [error, setError] = React.useState(false)
+  const [live, setLive] = React.useState<LiveStatus | null>(null)
   const [welcome, setWelcome] = React.useState(() => {
     try { return localStorage.getItem('onboarded-v1') !== 'true' } catch { return true }
   })
@@ -74,11 +77,12 @@ function App() {
       {data && <>
         <section className="forecast-panel" aria-label="Evidence needed">
           <span className="eyebrow">EVIDENCE ASSISTANT</span><h2>What we still need</h2>
-          <p>These are the case's evidence requirements. Live upload requests are generated separately by the collector; this static view does not show current R2 coverage.</p>
-          {data.upload_requests.map(r => <article key={r.request_id}><h3>{r.document}</h3><p>{r.why} {r.instructions}</p><small>Formats: {r.accepted_formats.join(', ').toUpperCase()} · Maximum 10 MiB · Review required</small><ImportEvidence requestId={r.request_id} /></article>)}
+          <p>{live && !live.stale ? 'These requests come from the connected collector’s latest evidence assessment.' : 'Showing bundled case requirements. Connect a workspace for live requests; these are not a claim of current coverage.'}</p>
+          {(live && !live.stale ? live.upload_requests : data.upload_requests).map(r => <article key={r.request_id}><h3>{r.document}</h3><p>{r.why} {r.instructions}</p><small>Formats: {r.accepted_formats.join(', ').toUpperCase()} · Maximum 10 MiB · Review required</small><ImportEvidence requestId={r.request_id} /></article>)}
           <p>{window.institutionalDesktop ? 'Imported documents stay on this device until you submit them through a connected workspace.' : 'Secure intake is currently operator-assisted. Public file uploads are not enabled.'}</p>
         </section>
-        <Workspace />
+        <Workspace onStatus={setLive} />
+        <Research graph={data.knowledge_graph} sources={data.sources} />
         <section className="metrics" aria-label="Project status">
           <div><span>Verified source records</span><strong>{data.sources.length.toString().padStart(2, '0')}</strong><small>Publisher-linked references</small></div>
           <div><span>Recorded events</span><strong>{data.observations.length.toString().padStart(2, '0')}</strong><small>Historical and attributed</small></div>

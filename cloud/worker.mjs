@@ -48,6 +48,13 @@ async function submission(env, user, id, owner = user.id) {
   return record
 }
 export default {
+  async scheduled(_event, env) {
+    const report = await readJSON(env.EVIDENCE, 'status/latest.json.gz', true)
+    const age = report ? Date.now() - Date.parse(report.checked_at) : Infinity
+    const status = { evaluated_at: new Date().toISOString(), collector_checked_at: report?.checked_at || null,
+      alert: !Number.isFinite(age) || age < 0 || age > 90 * 60000 ? 'collector_heartbeat_missing_or_stale' : null }
+    await env.EVIDENCE.put('status/watchdog.json', JSON.stringify(status))
+  },
   async fetch(request, env) {
     try {
       if (!env.EVIDENCE || !env.AUTH_USERS) throw new Rejection(503, 'Workspace is not configured')
