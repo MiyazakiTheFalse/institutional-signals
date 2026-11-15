@@ -10,7 +10,7 @@ Keep the codebase inexpensive to change, reliable to audit, and safe to ship. Po
 
 - This repository is currently public; ordinary `ubuntu-latest`, `windows-latest`, and `macos-latest` jobs are standard runners and are free for public repositories under GitHub's current published terms. Do not choose larger or premium runners.
 - If visibility changes to **private**, suspend automated installer builds until the owner verifies current free allowance and billing safeguards. Included private minutes are not an unlimited no-charge promise.
-- Pull requests run the normal validation suite without packaging installers. Native packaging runs on demand, on version tags, or when desktop packaging files change on `main`. This avoids generating three installers for unrelated source edits.
+- Pull requests run the normal validation suite without packaging installers. Native packaging runs only on demand or on version tags; ordinary code updates use the validation CI. This avoids generating three installers for unrelated source edits.
 - Keep build artifacts short-lived (one day), avoid unnecessary caches and repeated builds, and monitor storage usage; storage can be metered separately from compute.
 - Configure a **hard GitHub Actions spending budget** at the account/repository billing level, with `Stop usage when budget limit is reached` where available, and enable usage alerts. Repository code cannot set or verify billing budgets.
 - Never add a new paid integration, external API, premium GitHub feature, billing-enabled service, or paid runner without explicit owner authorization and a documented cost assessment.
