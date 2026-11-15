@@ -1,7 +1,9 @@
 name: Build desktop installers
 on:
   push:
-    paths: ['desktop/**', 'electron-builder.cjs', 'package.json', 'src/**', '.github/workflows/desktop.yml']
+    branches: [main]
+    tags: ['v*']
+    paths: ['desktop/**', 'electron-builder.cjs', 'package.json', 'package-lock.json', 'src/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -62,4 +64,4 @@ jobs:
             release/*.AppImage
             release/*.deb
             package-lock.json
-          retention-days: 14
+          retention-days: 1
