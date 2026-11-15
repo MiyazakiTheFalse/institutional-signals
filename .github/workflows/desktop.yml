@@ -30,6 +30,7 @@ jobs:
         with:
           node-version: '24'
       - run: npm install --no-audit --no-fund
+      - run: npm ls electron electron-builder csv-parse
       - run: node --test desktop/test-validation.cjs
       - run: npm run build
       - if: runner.os != 'Linux'
