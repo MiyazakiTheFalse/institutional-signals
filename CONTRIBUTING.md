@@ -44,7 +44,7 @@ Use `docs/adr/` to record the decision, alternatives, consequences and reversal 
 
 ## Cost constraints
 
-The accepted engineering budget for GitHub testing is **£0 of billable usage**. Keep the repository on standard free public-repository runners; never add larger runners. Installer builds are on-demand/version-tag only and artifacts expire after one day. Treat GitHub Actions storage as a separate potential metered cost. Account-level spending limits must be configured by the owner in GitHub billing; code alone cannot enforce a £0 bill. If the repository becomes private, stop and review its CI cost before running automation.
+The accepted engineering budget for GitHub testing is **£0 of billable usage**. Keep the repository on standard free public-repository runners; never add larger runners. Installer builds are on-demand, version-tag or desktop-build changes to `main`; they do not run for ordinary PRs. Artifacts expire after one day. Treat GitHub Actions storage as a separate potential metered cost. Account-level spending limits must be configured by the owner in GitHub billing; code alone cannot enforce a £0 bill. If the repository becomes private, stop and review its CI cost before running automation.
 
 The local-check commands above are the fallback when GitHub Actions is disabled or unavailable.
 
