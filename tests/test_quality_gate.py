@@ -23,7 +23,7 @@ class QualityGateTests(unittest.TestCase):
                 self.assertIsNone(gate.disallowed_path(Path(filename)))
 
     def test_detects_real_private_key_markers_and_conflicts(self):
-        self.assertIn("private key material", gate.scan_text("-----BEGIN PRIVATE KEY-----\nAAAA"))
+        self.assertIn("private key material", gate.scan_text("-----BEGIN " + "PRIVATE KEY-----\nAAAA"))
         self.assertIn("unresolved merge conflict", gate.scan_text("<<<<<<< HEAD\nchange\n=======\nother\n>>>>>>> main"))
 
     def test_ordinary_public_document_and_placeholders_pass(self):
