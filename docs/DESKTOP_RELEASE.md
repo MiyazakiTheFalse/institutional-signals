@@ -4,7 +4,7 @@ Institutional Signals is an Electron application. The desktop frontend is bundle
 
 ## Build installers
 
-GitHub: **Actions → Build desktop installers → Run workflow**, select `main`. The canonical workflow is `.github/workflows/desktop.yml`. Desktop application source or packaging dependencies changed on `main`, or a `v*` tag, also triggers builds. PRs and documentation-only changes do not. The workflow tests, builds and packages on native Windows, macOS, and Linux standard runners. Successful runs produce **Artifacts** named `institutional-signals-windows-x64`, `institutional-signals-mac-universal-downloads` (separate Intel/Apple Silicon artifacts), and `institutional-signals-linux-x64`. Download and extract each ZIP to get the installers. The workflow also generates one dependency-lock artifact **per run**, without yet committing the lockfile. Failed jobs must not be treated as accepted releases.
+GitHub: **Actions → Build desktop installers → Run workflow**, select `main`. The canonical workflow is `.github/workflows/desktop.yml`. Desktop application source or packaging dependencies changed on `main`, or a `v*` tag, also triggers builds. PRs and documentation-only changes do not. The workflow tests, builds and packages on native Windows, macOS, and Linux standard runners. Successful runs produce **Artifacts** named `institutional-signals-windows-x64`, `institutional-signals-mac-universal-downloads` (separate Intel/Apple Silicon artifacts), and `institutional-signals-linux-x64`. Download and extract each ZIP to get the installers. All native jobs use the committed `package-lock.json` with `npm ci`, so dependency resolution is consistent across runs. Failed jobs must not be treated as accepted releases.
 
 Version tags of the form `v0.2.0` also trigger packaging. **This workflow does not publish a GitHub Release automatically.** Review and test the build artifacts before manually creating a release. Installer artifacts are retained for one day to minimise billable storage; save approved binaries to a deliberately managed release destination.
 
@@ -31,7 +31,7 @@ The canonical desktop workflow runs the provenance and Cloudflare Worker tests. 
 
 ## Remaining production blockers
 
-1. Commit and review a generated `package-lock.json`; the canonical desktop workflow already generates a temporary lockfile and runs `npm ci`, but dependencies are not fixed across separate workflow runs until a lockfile is committed.
+1. Verify the committed `package-lock.json` stays in sync with each deliberate package update; require `npm ci` in every release build.
 2. Confirm the three native CI builds, smoke-test the packaged app on each OS, and provide support/install troubleshooting.
 3. Add trusted signing for Windows, Developer ID signing and notarization for macOS.
 4. Decide release/update versioning and authenticated auto-update strategy.

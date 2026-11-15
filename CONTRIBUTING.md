@@ -17,12 +17,12 @@ Institutional Signals is a research product with public claims and forecasts. Co
 python scripts/quality_gate.py
 python scripts/build_data.py --check
 python -m unittest discover -s tests -v
-npm install --no-audit --no-fund
+npm ci --no-audit --no-fund
 node --test desktop/test-validation.cjs desktop/test-provenance.cjs cloud/test-worker.mjs
 npm run build
 ```
 
-Until `package-lock.json` is committed, npm installation is **not** reproducible. Treat that as a release blocker and replace `npm install` with `npm ci` in validation CI (desktop workflow already uses `npm ci` with a temporary generated lockfile) after lockfile verification. Do not claim reproducible builds in the meantime.
+The repository commits `package-lock.json`. Use `npm ci` (not `npm install`) for validation and packaging; deliberately update the lockfile only when dependencies change, with a reviewed PR.
 
 ## Risk tiers
 

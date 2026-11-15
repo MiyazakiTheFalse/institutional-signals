@@ -44,11 +44,12 @@ Keep the codebase inexpensive to change, reliable to audit, and safe to ship. Po
 
 | ID | Item | Impact | Closure gate |
 |---|---|---|---|
-| DEBT-001 | No committed npm lockfile | Installer builds are not deterministic | Commit generated lockfile, switch CI/release to `npm ci`, verify |
 | DEBT-002 | Native installers have passed hosted-runner packaging, but not independent end-user acceptance tests | Installation may fail outside runners | Build + install/launch/uninstall test on each OS |
 | DEBT-003 | No signed/notarised desktop packages | User trust and OS warnings | Review signing plan, sign and notarise production releases |
 | DEBT-004 | Knowledge graph contains no verified real-world relationships | Decision map lacks validated connections | Add primary-sourced, reviewed edges with as-of tests |
 | DEBT-005 | Live archive not connected to curated dashboard | Freshness cannot be represented as live | End-to-end source → review → publication with stale/error states |
+
+**Resolved:** DEBT-001 — committed Node 24 lockfile; standard validation and desktop packaging use `npm ci`. Review lockfile changes before merging.
 
 ## What automation does and does not enforce
 
