@@ -4,6 +4,19 @@
 
 Keep the codebase inexpensive to change, reliable to audit, and safe to ship. Policy must be proportionate: small docs/UI edits stay easy; trust-boundary and forecasting changes require stronger evidence.
 
+## Zero-paid-CI policy
+
+**No paid GitHub testing, runner upgrades, or unapproved metered services.** This is a release requirement, not merely a cost preference.
+
+- This repository is currently public; ordinary `ubuntu-latest`, `windows-latest`, and `macos-latest` jobs are standard runners and are free for public repositories under GitHub's current published terms. Do not choose larger or premium runners.
+- If visibility changes to **private**, suspend automated installer builds until the owner verifies current free allowance and billing safeguards. Included private minutes are not an unlimited no-charge promise.
+- The normal PR workflow tests without generating installers. Installer packaging runs only on a manually requested workflow or a version tag.
+- Keep build artifacts short-lived (one day), avoid unnecessary caches and repeated builds, and monitor storage usage; storage can be metered separately from compute.
+- Configure a **hard GitHub Actions spending budget** at the account/repository billing level, with `Stop usage when budget limit is reached` where available, and enable usage alerts. Repository code cannot set or verify billing budgets.
+- Never add a new paid integration, external API, premium GitHub feature, billing-enabled service, or paid runner without explicit owner authorization and a documented cost assessment.
+- Provide a local test path that functions without GitHub Actions. Successful CI is verification, not a reason to incur charges.
+- Re-check GitHub's actual billing terms and repository visibility before changing workflows.
+
 ## Merge requirements
 
 1. Use branches and pull requests; do not use `main` as an experimentation area.
