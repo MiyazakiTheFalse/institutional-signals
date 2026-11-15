@@ -18,4 +18,5 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-audit --no-fund
+      - run: node --test desktop/test-validation.cjs desktop/test-provenance.cjs cloud/test-worker.mjs
       - run: npm run build

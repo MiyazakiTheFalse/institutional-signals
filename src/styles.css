@@ -1,10 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 :root { color: #e8ecf1; background: #0b1018; font-family: 'DM Sans', sans-serif; font-synthesis: none; text-rendering: optimizeLegibility; }
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
 a { color: #7dd4bc; text-decoration: none; }
 a:hover { text-decoration: underline; }
-button { font: inherit; }
+button { font: inherit; background:#213f3b; color:#dcfff3; border:1px solid #54867a; border-radius:7px; padding:10px 16px; cursor:pointer; }
+button:disabled { opacity:.55; cursor:not-allowed; }
+button:focus-visible, input:focus-visible { outline:3px solid #8bdabe; outline-offset:3px; }
+form { display:grid; gap:16px; max-width:620px; margin:20px 0; }
+label { display:grid; gap:8px; font-size:14px; color:#c8d7df; }
+input { width:100%; padding:12px; background:#0e1820; color:#edf6fb; border:1px solid #536574; border-radius:6px; font:inherit; color-scheme:dark; }
+.workspace-actions { display:flex; gap:12px; flex-wrap:wrap; }
+.forecast-panel { margin:28px 0; }
+.forecast-panel article { border-top:1px solid #344c4c; padding:20px 0; overflow-wrap:anywhere; }
+.forecast-panel li { line-height:1.8; font-size:13px; }
+.import-evidence { margin-top:18px; }
 .site-header { padding: 23px max(5%, calc((100% - 1180px)/2)); display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #26303d; }
 .brand { display:flex; gap:13px; align-items:center; color:#f1f4f8; letter-spacing: .12em; font-size:12px; text-decoration:none; }
 .brand b {font-weight:700}

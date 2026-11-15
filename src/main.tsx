@@ -1,12 +1,7 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles.css'
-
-declare global {
-  interface Window {
-    institutionalDesktop?: { version: () => Promise<string>; importEvidence: (requestId: string) => Promise<{ canceled?: boolean; state?: string; location?: string }> }
-  }
-}
+import { ImportEvidence, Workspace } from './Workspace'
 
 type Source = {
   id: string; title: string; publisher: string; published_at: string;
@@ -43,20 +38,9 @@ function validateDataset(value: unknown): Dataset {
 function App() {
   const [data, setData] = React.useState<Dataset | null>(null)
   const [error, setError] = React.useState(false)
-  const [intakeStatus, setIntakeStatus] = React.useState('')
-  const [importing, setImporting] = React.useState(false)
   const [welcome, setWelcome] = React.useState(() => {
     try { return localStorage.getItem('onboarded-v1') !== 'true' } catch { return true }
   })
-  async function importEvidence(requestId: string) {
-    if (!window.institutionalDesktop || importing) return
-    setImporting(true)
-    try {
-      const result = await window.institutionalDesktop.importEvidence(requestId)
-      setIntakeStatus(result.canceled ? 'Import cancelled.' : 'Saved on this device in quarantine. Not uploaded to the cloud, scanned or approved for forecasting.')
-    } catch { setIntakeStatus('Import refused. Check the requested format, size and file contents.') }
-    finally { setImporting(false) }
-  }
   const [tab, setTab] = React.useState<'timeline' | 'sources' | 'forecasts'>('timeline')
   React.useEffect(() => {
     fetch('./data/dashboard.json')
@@ -91,10 +75,10 @@ function App() {
         <section className="forecast-panel" aria-label="Evidence needed">
           <span className="eyebrow">EVIDENCE ASSISTANT</span><h2>What we still need</h2>
           <p>These are the case's evidence requirements. Live upload requests are generated separately by the collector; this static view does not show current R2 coverage.</p>
-          {data.upload_requests.map(r => <article key={r.request_id}><h3>{r.document}</h3><p>{r.why} {r.instructions}</p><small>Formats: {r.accepted_formats.join(', ').toUpperCase()} · Maximum 10 MiB · Review required</small>{window.institutionalDesktop && <p><button type="button" disabled={importing} onClick={() => void importEvidence(r.request_id)}>Import document on this device</button></p>}</article>)}
-          <p role="status">{intakeStatus}</p>
-          <p>{window.institutionalDesktop ? 'Documents remain quarantined on this device. Cloud submission and reviewer approval are not connected yet.' : 'Secure intake is currently operator-assisted. Public file uploads are not enabled.'}</p>
+          {data.upload_requests.map(r => <article key={r.request_id}><h3>{r.document}</h3><p>{r.why} {r.instructions}</p><small>Formats: {r.accepted_formats.join(', ').toUpperCase()} · Maximum 10 MiB · Review required</small><ImportEvidence requestId={r.request_id} /></article>)}
+          <p>{window.institutionalDesktop ? 'Imported documents stay on this device until you submit them through a connected workspace.' : 'Secure intake is currently operator-assisted. Public file uploads are not enabled.'}</p>
         </section>
+        <Workspace />
         <section className="metrics" aria-label="Project status">
           <div><span>Verified source records</span><strong>{data.sources.length.toString().padStart(2, '0')}</strong><small>Publisher-linked references</small></div>
           <div><span>Recorded events</span><strong>{data.observations.length.toString().padStart(2, '0')}</strong><small>Historical and attributed</small></div>

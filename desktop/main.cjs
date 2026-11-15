@@ -5,6 +5,8 @@ const { pathToFileURL } = require('node:url')
 const crypto = require('node:crypto')
 const zlib = require('node:zlib')
 const { validateFile } = require('./validation.cjs')
+const { validateProvenance } = require('./provenance.cjs')
+const cloud = require('./cloud.cjs')
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } }])
 const CSP = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'; form-action 'none'"
@@ -49,8 +51,16 @@ app.whenReady().then(async () => {
     return { action: 'deny' }
   })
   ipcMain.handle('app:version', event => { caller(event); return app.getVersion() })
-  ipcMain.handle('evidence:import', async (event, requestId) => {
+  ipcMain.handle('workspace:connect', (event, value) => { caller(event); return cloud.connect(value) })
+  ipcMain.handle('workspace:info', event => { caller(event); return cloud.info() })
+  ipcMain.handle('workspace:disconnect', event => { caller(event); return cloud.disconnect() })
+  ipcMain.handle('workspace:status', event => { caller(event); return cloud.call('/v1/status') })
+  ipcMain.handle('evidence:list', event => { caller(event); return cloud.listLocal() })
+  ipcMain.handle('evidence:submit', (event, id) => { caller(event); return cloud.submit(id) })
+  ipcMain.handle('evidence:remote', event => { caller(event); return cloud.call('/v1/submissions') })
+  ipcMain.handle('evidence:import', async (event, requestId, input) => {
     caller(event)
+    const metadata = validateProvenance(input)
     const data = JSON.parse(await fs.readFile(path.join(root, 'data/dashboard.json'), 'utf8'))
     const request = data.upload_requests.find(r => r.request_id === requestId)
     if (!request) throw new Error('Unknown evidence request')
@@ -71,7 +81,7 @@ app.whenReady().then(async () => {
     const folder = path.join(app.getPath('userData'), 'quarantine', id)
     await fs.mkdir(folder, { recursive: true, mode: 0o700 })
     await fs.writeFile(path.join(folder, hash + '.gz'), zlib.gzipSync(body), { flag: 'wx', mode: 0o600 })
-    const record = { id, request_id: requestId, filename: path.basename(selected), sha256: hash, bytes: body.length, received_at: new Date().toISOString(), state: 'quarantined', scan_state: 'not_scanned', location: 'this_device_only' }
+    const record = { id, request_id: requestId, ...metadata, filename: path.basename(selected), sha256: hash, bytes: body.length, received_at: new Date().toISOString(), state: 'quarantined', scan_state: 'not_scanned', location: 'this_device_only' }
     await fs.writeFile(path.join(folder, 'manifest.json'), JSON.stringify(record), { flag: 'wx', mode: 0o600 })
     return { id, state: record.state, location: record.location }
   })
