@@ -116,7 +116,11 @@ def fetch(url, headers):
 
 
 class PoliteFetch:
-    """Fetch robots once per origin per run; fail closed on access/outage errors."""
+    """RFC 9309 robots handling; rate limits and server outages fail closed.
+
+    A 4xx on robots.txt means no policy is available, not a denied document.
+    Any denial on the actual document is still propagated unchanged.
+    """
     def __init__(self):
         self.robots = {}
 
@@ -129,8 +133,9 @@ class PoliteFetch:
                 _, _, raw = fetch(origin + '/robots.txt', {})
                 parser.parse(raw.decode('utf-8', errors='replace').splitlines())
             except HTTPError as exc:
-                if exc.code != 404:
+                if not 400 <= exc.code < 500 or exc.code == 429:
                     raise
+                exc.close()
                 parser.parse([])
             self.robots[origin] = parser
         if not self.robots[origin].can_fetch(AGENT, url):

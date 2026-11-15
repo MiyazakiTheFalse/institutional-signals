@@ -6,9 +6,10 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.error import HTTPError
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
-from collect import collect, LocalStore, packed
+from collect import collect, LocalStore, packed, PoliteFetch
 
 
 class CollectionTests(unittest.TestCase):
@@ -93,6 +94,31 @@ class CollectionTests(unittest.TestCase):
 
     def test_compression_is_deterministic(self):
         self.assertEqual(packed({'a': 1}), packed({'a': 1}))
+
+    def test_robots_unavailable_does_not_mean_document_denied(self):
+        with patch('collect.fetch', side_effect=[HTTPError('https://example.org/robots.txt', 403, 'unavailable', {}, None),
+                                                 (200, {}, b'document')]) as get:
+            self.assertEqual(PoliteFetch()('https://example.org/news', {})[0], 200)
+            self.assertEqual(get.call_count, 2)
+
+    def test_actual_document_403_is_preserved(self):
+        with patch('collect.fetch', side_effect=[(200, {}, b'User-agent: *\nAllow: /'),
+                                                 HTTPError('https://example.org/news', 403, 'denied', {}, None)]):
+            with self.assertRaises(HTTPError):
+                PoliteFetch()('https://example.org/news', {})
+
+    def test_robots_server_failure_or_rate_limit_stops_fetch(self):
+        for status in (429, 500, 503):
+            with self.subTest(status=status), patch('collect.fetch', side_effect=HTTPError('https://example.org/robots.txt', status, 'retry later', {}, None)) as get:
+                with self.assertRaises(HTTPError):
+                    PoliteFetch()('https://example.org/news', {})
+                self.assertEqual(get.call_count, 1)
+
+    def test_robots_disallow_still_stops_document_fetch(self):
+        with patch('collect.fetch', return_value=(200, {}, b'User-agent: *\nDisallow: /')) as get:
+            with self.assertRaisesRegex(ValueError, 'disallows'):
+                PoliteFetch()('https://example.org/news', {})
+            self.assertEqual(get.call_count, 1)
 
 
 if __name__ == '__main__':
