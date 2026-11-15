@@ -1,0 +1,47 @@
+[
+  {
+    "id": "OBS-001",
+    "date": "2026-09-18",
+    "subject": "UK Parliament",
+    "event_type": "oversight",
+    "summary": "EFRA Committee published recommendations about Thames Water's future, creditor influence and special administration.",
+    "source_ids": ["PARL-2026-09"],
+    "status": "documented_report"
+  },
+  {
+    "id": "OBS-002",
+    "date": "2026-10-16",
+    "subject": "UK Parliament",
+    "event_type": "scrutiny",
+    "summary": "EFRA Committee chair called for decisive action amid reports of further financing discussions.",
+    "source_ids": ["PARL-2026-10"],
+    "status": "documented_statement"
+  },
+  {
+    "id": "OBS-003",
+    "date": "2026-10-29",
+    "subject": "Ofwat",
+    "event_type": "data_release",
+    "summary": "Ofwat published the 2025–26 operational performance report with accompanying data and definitions.",
+    "source_ids": ["OFWAT-2026"],
+    "status": "documented_publication"
+  },
+  {
+    "id": "OBS-004",
+    "date": "2026-11-04",
+    "subject": "UK Parliament",
+    "event_type": "oversight",
+    "summary": "EFRA Committee recommended safeguards against regulatory capture in proposed water-sector reforms.",
+    "source_ids": ["PARL-2026-11"],
+    "status": "documented_report"
+  },
+  {
+    "id": "OBS-005",
+    "date": "2026-11-09",
+    "subject": "Thames Water",
+    "event_type": "company_announcement",
+    "summary": "Thames Water announced a transaction support agreement for proposed maturity extensions; stated future hearings and creditor meetings remain contingent.",
+    "source_ids": ["TW-2026-11-09"],
+    "status": "company_statement"
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "source_id": "PARL-2026-09",
+    "url": "https://publications.parliament.uk/pa/cm5902/cmselect/cmenvfru/664/report.html",
+    "poll_target_minutes": 60
+  },
+  {
+    "source_id": "PARL-2026-11",
+    "url": "https://committees.parliament.uk/committee/52/environment-food-and-rural-affairs-committee/news/218705/water-sector-reform-must-close-loopholes-on-pollution-reporting-and-let-ministers-wield-threat-of-special-administration/",
+    "poll_target_minutes": 60
+  },
+  {
+    "source_id": "TW-2026-11-09",
+    "url": "https://www.thameswater.co.uk/news/2026/nov/rp15-tsa-and-psl-announcement",
+    "poll_target_minutes": 60
+  },
+  {
+    "source_id": "OFWAT-2026",
+    "url": "https://www.ofwat.gov.uk/regulated-companies/company-obligations/outcomes/water-company-operational-performance-report-wcopr-2025-26/",
+    "poll_target_minutes": 60
+  },
+  {
+    "source_id": "GOV-JOINT-2026",
+    "url": "https://www.gov.uk/government/publications/water-industry-performance-insights-joint-regulator-report",
+    "poll_target_minutes": 60
+  },
+  {
+    "source_id": "PARL-2026-10",
+    "url": "https://committees.parliament.uk/committee/52/environment-food-and-rural-affairs-committee/news/218249/act-decisively-on-thames-water-efra-chair-tells-government/",
+    "poll_target_minutes": 60
+  },
+  {
+    "source_id": "TW-NEWS",
+    "url": "https://www.thameswater.co.uk/news",
+    "poll_target_minutes": 30
+  }
+]

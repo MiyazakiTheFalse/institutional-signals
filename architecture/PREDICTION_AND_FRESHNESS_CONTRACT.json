@@ -1,0 +1,16 @@
+{
+  "version": "0.2",
+  "required_source_fields": ["source_id", "last_attempt_at", "last_success_at", "latest_publication_at", "poll_target_minutes", "coverage_state"],
+  "required_evidence_fields": ["event_id", "source_id", "content_hash_sha256", "observed_at", "verified_at", "raw_blob_ref"],
+  "required_forecast_fields": ["forecast_id", "case_id", "issued_at", "as_of", "horizon_end", "p_event", "model_version", "feature_snapshot_hash", "evidence_ids", "source_coverage", "status"],
+  "statuses": ["current", "delayed", "stale", "unavailable", "experimental", "suspended"],
+  "rules": [
+    "All timestamps are UTC and timezone-aware",
+    "A successful fetch is distinct from a new publication",
+    "No source failure is interpreted as evidence of event absence",
+    "Forecast snapshots are immutable",
+    "Reconstruct historical predictions only from evidence available at the time",
+    "Every forecast includes evidence and model provenance",
+    "If required source coverage is below threshold, qualify or suspend forecast"
+  ]
+}

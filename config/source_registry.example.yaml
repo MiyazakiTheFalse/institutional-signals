@@ -1,0 +1,31 @@
+# Config only: source URLs below are documentation entrypoints, not assumed machine-readable endpoints.
+# Each live adapter must be tested against its actual API, rights, rate limits, and publishing cadence.
+version: 1
+sources:
+  - source_id: ofwat-publications
+    institution_id: ofwat
+    publisher: Ofwat
+    canonical_url: https://www.ofwat.gov.uk/publications/
+    adapter: html_index_pending_verification
+    poll_target_minutes: 60
+    priority: high
+    expected_publication_pattern: irregular
+    required_for_cases: [thames-water-restructuring]
+  - source_id: parliament-committees
+    institution_id: uk-parliament
+    publisher: UK Parliament
+    canonical_url: https://developer.parliament.uk/
+    adapter: api_pending_endpoint_selection
+    poll_target_minutes: 60
+    priority: high
+    expected_publication_pattern: irregular
+    required_for_cases: [thames-water-restructuring]
+  - source_id: companies-house
+    institution_id: companies-house
+    publisher: Companies House
+    canonical_url: https://developer.company-information.service.gov.uk/
+    adapter: api_requires_key_and_rate_limit_compliance
+    poll_target_minutes: 60
+    priority: high
+    expected_publication_pattern: irregular
+    required_for_cases: [thames-water-restructuring]

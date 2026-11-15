@@ -1,0 +1,99 @@
+import gzip
+import json
+import sys
+import tempfile
+import unittest
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from urllib.error import HTTPError
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+from collect import collect, LocalStore, packed
+
+
+class CollectionTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.store = LocalStore(self.temp.name)
+        self.now = datetime(2026, 11, 15, 12, tzinfo=timezone.utc)
+        self.sources = [{'source_id': 'official', 'url': 'https://example.org/news', 'poll_target_minutes': 30}]
+
+    def run_collect(self, transport, minutes=0):
+        return collect(self.sources, self.store, transport, self.now + timedelta(minutes=minutes))
+
+    def initial(self):
+        return self.run_collect(lambda u, h: (200, {'ETag': 'v1'}, b'evidence' * 100))
+
+    def test_compressed_snapshot_roundtrip_and_content_address(self):
+        result = self.initial()
+        event = result['events'][0]
+        self.assertEqual(gzip.decompress(self.store.get(event['raw_key'])), b'evidence' * 100)
+        self.assertLess(event['compressed_bytes'], event['original_bytes'])
+        self.assertTrue(result['coverage']['safe_to_claim_current'])
+        self.assertEqual(event['review_state'], 'unreviewed_content_change')
+
+    def test_no_change_304_records_success_without_new_event(self):
+        self.initial()
+        def not_modified(url, headers):
+            self.assertEqual(headers['If-None-Match'], 'v1')
+            return 304, {}, b''
+        result = self.run_collect(not_modified, 30)
+        self.assertEqual(result['events'], [])
+        self.assertEqual(result['health']['official']['status'], 'current')
+
+    def test_identical_200_deduplicates(self):
+        self.initial()
+        result = self.run_collect(lambda u, h: (200, {}, b'evidence' * 100), 30)
+        self.assertEqual(result['events'], [])
+
+    def test_correction_keeps_original(self):
+        first = self.initial()['events'][0]
+        second = self.run_collect(lambda u, h: (200, {}, b'correction'), 30)['events'][0]
+        self.assertEqual(second['previous_sha256'], first['sha256'])
+        self.assertIsNotNone(self.store.get(first['raw_key']))
+        self.assertNotEqual(first['raw_key'], second['raw_key'])
+
+    def test_outage_is_not_no_event(self):
+        self.initial()
+        def offline(u, h):
+            raise OSError('offline')
+        report = self.run_collect(offline, 30)
+        self.assertFalse(report['coverage']['safe_to_claim_current'])
+        self.assertEqual(report['sources']['official']['consecutive_failures'], 1)
+        self.assertEqual(report['sources']['official']['last_success_at'], '2026-11-15T12:00:00Z')
+
+    def test_304_without_previous_snapshot_rejected(self):
+        report = self.run_collect(lambda u, h: (304, {}, b''))
+        self.assertFalse(report['coverage']['safe_to_claim_current'])
+
+    def test_poll_target_skips_network(self):
+        self.initial()
+        def unexpected(u, h):
+            self.fail('Polled before target')
+        self.assertEqual(self.run_collect(unexpected, 10)['events'], [])
+
+    def test_storage_failure_prevents_checkpoint_advance(self):
+        original = self.store.put
+        def broken(key, body, immutable=False):
+            if key.startswith('runs/'):
+                raise OSError('upload failed')
+            original(key, body, immutable)
+        self.store.put = broken
+        with self.assertRaises(OSError):
+            self.initial()
+        self.assertIsNone(self.store.get('state/latest.json.gz'))
+
+    def test_retry_after_respected(self):
+        def limited(u, h):
+            raise HTTPError(u, 429, 'limited', {'Retry-After': '7200'}, None)
+        result = self.run_collect(limited)
+        next_check = datetime.fromisoformat(result['sources']['official']['next_attempt_at'])
+        self.assertEqual(next_check, self.now + timedelta(hours=2))
+
+    def test_compression_is_deterministic(self):
+        self.assertEqual(packed({'a': 1}), packed({'a': 1}))
+
+
+if __name__ == '__main__':
+    unittest.main()

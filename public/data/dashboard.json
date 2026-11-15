@@ -1,0 +1,132 @@
+{
+  "project": "Institutional Signals",
+  "dataset_version": "0.1",
+  "as_of": "2026-11-15",
+  "notice": "Curated public-source research data; hypotheses are not findings of corruption. No forecast performance is claimed.",
+  "sources": [
+    {
+      "id": "TW-2026-11-09",
+      "title": "Recapitalisation update — proposed debt-maturity extension",
+      "publisher": "Thames Water",
+      "published_at": "2026-11-09",
+      "verified_at": "2026-11-15",
+      "url": "https://www.thameswater.co.uk/news/2026/nov/rp15-tsa-and-psl-announcement",
+      "type": "company_statement",
+      "reliability_note": "Primary account of what the company announced; claims about future outcomes are not independently confirmed.",
+      "access_note": "Public announcement, 9 November 2026."
+    },
+    {
+      "id": "PARL-2026-11",
+      "title": "Water sector reform must close loopholes on pollution reporting",
+      "publisher": "House of Commons Environment, Food and Rural Affairs Committee",
+      "published_at": "2026-11-04",
+      "verified_at": "2026-11-15",
+      "url": "https://committees.parliament.uk/committee/52/environment-food-and-rural-affairs-committee/news/218705/water-sector-reform-must-close-loopholes-on-pollution-reporting-and-let-ministers-wield-threat-of-special-administration/",
+      "type": "parliamentary_report_summary",
+      "reliability_note": "Official summary of committee recommendations on regulation and capture risk.",
+      "access_note": "Public committee webpage."
+    },
+    {
+      "id": "OFWAT-2026",
+      "title": "Water Company Operational Performance Report 2025–26",
+      "publisher": "Ofwat",
+      "published_at": "2026-10-29",
+      "verified_at": "2026-11-15",
+      "url": "https://www.ofwat.gov.uk/regulated-companies/company-obligations/outcomes/water-company-operational-performance-report-wcopr-2025-26/",
+      "type": "regulator_performance",
+      "reliability_note": "Performance reporting using company-submitted data; check underlying definitions and uncertainty.",
+      "access_note": "Public report with data downloads and dictionary."
+    },
+    {
+      "id": "GOV-JOINT-2026",
+      "title": "Water industry performance insights: joint regulator report",
+      "publisher": "Ofwat / Environment Agency / Drinking Water Inspectorate / Natural Resources Wales",
+      "published_at": "2026-10-29",
+      "verified_at": "2026-11-15",
+      "url": "https://www.gov.uk/government/publications/water-industry-performance-insights-joint-regulator-report",
+      "type": "joint_regulator_report",
+      "reliability_note": "Cross-regulator overview of performance; reporting years and units must be preserved.",
+      "access_note": "Public GOV.UK report."
+    },
+    {
+      "id": "PARL-2026-10",
+      "title": "Act decisively on Thames Water, EFRA Chair tells government",
+      "publisher": "House of Commons Environment, Food and Rural Affairs Committee",
+      "published_at": "2026-10-16",
+      "verified_at": "2026-11-15",
+      "url": "https://committees.parliament.uk/committee/52/environment-food-and-rural-affairs-committee/news/218249/act-decisively-on-thames-water-efra-chair-tells-government/",
+      "type": "parliamentary_statement",
+      "reliability_note": "Statement by committee chair, not a legal determination.",
+      "access_note": "Public HTML."
+    },
+    {
+      "id": "PARL-2026-09",
+      "title": "The future of Thames Water and special administration (HC 664)",
+      "publisher": "House of Commons Environment, Food and Rural Affairs Committee",
+      "published_at": "2026-09-18",
+      "verified_at": "2026-11-15",
+      "url": "https://publications.parliament.uk/pa/cm5902/cmselect/cmenvfru/664/report.html",
+      "type": "parliamentary_report",
+      "reliability_note": "Parliamentary committee findings and recommendations; distinguish from judicial findings.",
+      "access_note": "Public HTML. Link and attribute; check licence before republication."
+    }
+  ],
+  "observations": [
+    {
+      "id": "OBS-005",
+      "date": "2026-11-09",
+      "subject": "Thames Water",
+      "event_type": "company_announcement",
+      "summary": "Thames Water announced a transaction support agreement for proposed maturity extensions; stated future hearings and creditor meetings remain contingent.",
+      "source_ids": [
+        "TW-2026-11-09"
+      ],
+      "status": "company_statement"
+    },
+    {
+      "id": "OBS-004",
+      "date": "2026-11-04",
+      "subject": "UK Parliament",
+      "event_type": "oversight",
+      "summary": "EFRA Committee recommended safeguards against regulatory capture in proposed water-sector reforms.",
+      "source_ids": [
+        "PARL-2026-11"
+      ],
+      "status": "documented_report"
+    },
+    {
+      "id": "OBS-003",
+      "date": "2026-10-29",
+      "subject": "Ofwat",
+      "event_type": "data_release",
+      "summary": "Ofwat published the 2025–26 operational performance report with accompanying data and definitions.",
+      "source_ids": [
+        "OFWAT-2026"
+      ],
+      "status": "documented_publication"
+    },
+    {
+      "id": "OBS-002",
+      "date": "2026-10-16",
+      "subject": "UK Parliament",
+      "event_type": "scrutiny",
+      "summary": "EFRA Committee chair called for decisive action amid reports of further financing discussions.",
+      "source_ids": [
+        "PARL-2026-10"
+      ],
+      "status": "documented_statement"
+    },
+    {
+      "id": "OBS-001",
+      "date": "2026-09-18",
+      "subject": "UK Parliament",
+      "event_type": "oversight",
+      "summary": "EFRA Committee published recommendations about Thames Water's future, creditor influence and special administration.",
+      "source_ids": [
+        "PARL-2026-09"
+      ],
+      "status": "documented_report"
+    }
+  ],
+  "forecasts": []
+}

@@ -1,0 +1,29 @@
+name: Collect and archive public sources
+on:
+  schedule:
+    - cron: '13,43 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: institutional-signals-r2-writer
+  cancel-in-progress: false
+jobs:
+  collect:
+    # Explicit activation after the private bucket and secrets are configured.
+    if: vars.COLLECTION_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements-collection.txt
+      - run: python -m unittest discover -s tests -v
+      - run: python scripts/collect.py --store r2
