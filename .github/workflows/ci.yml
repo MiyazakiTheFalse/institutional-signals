@@ -1,7 +1,12 @@
 name: Validate and build
 on:
   push:
+    branches:
+      - main
   pull_request:
+concurrency:
+  group: validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
