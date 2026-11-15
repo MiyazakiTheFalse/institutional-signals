@@ -2,6 +2,12 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles.css'
 
+declare global {
+  interface Window {
+    institutionalDesktop?: { version: () => Promise<string>; importEvidence: (requestId: string) => Promise<{ canceled?: boolean; state?: string; location?: string }> }
+  }
+}
+
 type Source = {
   id: string; title: string; publisher: string; published_at: string;
   url: string; type: string; reliability_note: string
@@ -37,9 +43,23 @@ function validateDataset(value: unknown): Dataset {
 function App() {
   const [data, setData] = React.useState<Dataset | null>(null)
   const [error, setError] = React.useState(false)
+  const [intakeStatus, setIntakeStatus] = React.useState('')
+  const [importing, setImporting] = React.useState(false)
+  const [welcome, setWelcome] = React.useState(() => {
+    try { return localStorage.getItem('onboarded-v1') !== 'true' } catch { return true }
+  })
+  async function importEvidence(requestId: string) {
+    if (!window.institutionalDesktop || importing) return
+    setImporting(true)
+    try {
+      const result = await window.institutionalDesktop.importEvidence(requestId)
+      setIntakeStatus(result.canceled ? 'Import cancelled.' : 'Saved on this device in quarantine. Not uploaded to the cloud, scanned or approved for forecasting.')
+    } catch { setIntakeStatus('Import refused. Check the requested format, size and file contents.') }
+    finally { setImporting(false) }
+  }
   const [tab, setTab] = React.useState<'timeline' | 'sources' | 'forecasts'>('timeline')
   React.useEffect(() => {
-    fetch('/data/dashboard.json')
+    fetch('./data/dashboard.json')
       .then(response => { if (!response.ok) throw new Error('Dataset unavailable'); return response.json() })
       .then(payload => setData(validateDataset(payload)))
       .catch(() => setError(true))
@@ -53,6 +73,7 @@ function App() {
     </header>
 
     <main className="container">
+      {welcome && <section className="forecast-panel"><span className="eyebrow">WELCOME TO INSTITUTIONAL SIGNALS</span><h2>Start with the evidence</h2><p>Explore the source library, review the timeline, then check which evidence is missing. Forecasts stay on hold until their required evidence is current and reviewed.</p><p>This version includes a bundled research dataset. Live collection runs separately in the cloud. Desktop imports stay on your device in quarantine.</p><button type="button" onClick={() => { setWelcome(false); try { localStorage.setItem('onboarded-v1', 'true') } catch {} }}>Explore the research</button></section>}
       <div className="eyebrow">RESEARCH / CASE 001</div>
       <div className="hero-layout">
         <div>
@@ -70,8 +91,9 @@ function App() {
         <section className="forecast-panel" aria-label="Evidence needed">
           <span className="eyebrow">EVIDENCE ASSISTANT</span><h2>What we still need</h2>
           <p>These are the case's evidence requirements. Live upload requests are generated separately by the collector; this static view does not show current R2 coverage.</p>
-          {data.upload_requests.map(r => <article key={r.request_id}><h3>{r.document}</h3><p>{r.why} {r.instructions}</p><small>Formats: {r.accepted_formats.join(', ').toUpperCase()} · Maximum 10 MiB · Review required</small></article>)}
-          <p>Secure intake is currently operator-assisted. Public file uploads are not enabled.</p>
+          {data.upload_requests.map(r => <article key={r.request_id}><h3>{r.document}</h3><p>{r.why} {r.instructions}</p><small>Formats: {r.accepted_formats.join(', ').toUpperCase()} · Maximum 10 MiB · Review required</small>{window.institutionalDesktop && <p><button type="button" disabled={importing} onClick={() => void importEvidence(r.request_id)}>Import document on this device</button></p>}</article>)}
+          <p role="status">{intakeStatus}</p>
+          <p>{window.institutionalDesktop ? 'Documents remain quarantined on this device. Cloud submission and reviewer approval are not connected yet.' : 'Secure intake is currently operator-assisted. Public file uploads are not enabled.'}</p>
         </section>
         <section className="metrics" aria-label="Project status">
           <div><span>Verified source records</span><strong>{data.sources.length.toString().padStart(2, '0')}</strong><small>Publisher-linked references</small></div>

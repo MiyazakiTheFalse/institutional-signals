@@ -1,0 +1,8 @@
+const { test } = require('node:test')
+const assert = require('node:assert/strict')
+const { validateFile } = require('./validation.cjs')
+test('rejects executable disguised as PDF', () => assert.throws(() => validateFile('x.pdf', Buffer.from('MZevil'), ['pdf'])))
+test('rejects traversal and alternate streams', () => assert.throws(() => validateFile('../x.pdf', Buffer.from('%PDF-1.7\n%%EOF'), ['pdf'])))
+test('rejects active PDF actions', () => assert.throws(() => validateFile('x.pdf', Buffer.from('%PDF-1.7\n/JS (evil)\n%%EOF'), ['pdf'])))
+test('benign signature remains eligible for quarantine only', () => assert.doesNotThrow(() => validateFile('x.pdf', Buffer.from('%PDF-1.7\n%%EOF'), ['pdf'])))
+test('rejects oversized files', () => assert.throws(() => validateFile('x.csv', Buffer.alloc(10485761), ['csv'])))
