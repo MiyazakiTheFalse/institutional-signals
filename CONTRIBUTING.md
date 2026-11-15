@@ -22,7 +22,7 @@ node --test desktop/test-validation.cjs desktop/test-provenance.cjs cloud/test-w
 npm run build
 ```
 
-Until `package-lock.json` is committed, npm installation is **not** reproducible. Treat that as a release blocker and replace `npm install` with `npm ci` in both workflows after lockfile verification. Do not claim reproducible builds in the meantime.
+Until `package-lock.json` is committed, npm installation is **not** reproducible. Treat that as a release blocker and replace `npm install` with `npm ci` in validation CI (desktop workflow already uses `npm ci` with a temporary generated lockfile) after lockfile verification. Do not claim reproducible builds in the meantime.
 
 ## Risk tiers
 
