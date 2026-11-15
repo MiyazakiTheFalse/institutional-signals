@@ -55,8 +55,8 @@ function App() {
 
   return <div className="app">
     <header className="site-header">
-      <a href="/" className="brand"><span className="brand-mark">IS</span><span>INSTITUTIONAL <b>SIGNALS</b></span></a>
-      <span className="header-note">PUBLIC RESEARCH LAB · V0.1</span>
+      <a href="./index.html" className="brand"><span className="brand-mark">IS</span><span>INSTITUTIONAL <b>SIGNALS</b></span></a>
+      <span className="header-note">PUBLIC RESEARCH LAB · V0.2</span>
     </header>
 
     <main className="container">
@@ -72,7 +72,7 @@ function App() {
 
       <div className="callout"><b>Evidence, not accusation.</b> A parliamentary concern about regulatory capture is not proof of corruption. This site contains no automated wrongdoing score or validated predictive-accuracy claim.</div>
 
-      {error && <p className="message" role="alert">Could not load the local research dataset. Run the Python export script and reload.</p>}
+      {error && <p className="message" role="alert">The research data could not be opened. Close and reopen the app. If the problem persists, install the latest build or contact your workspace operator.</p>}
       {!data && !error && <p className="message">Loading documented sources...</p>}
       {data && <>
         <section className="forecast-panel" aria-label="Evidence needed">
