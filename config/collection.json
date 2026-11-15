@@ -33,5 +33,48 @@
     "source_id": "TW-NEWS",
     "url": "https://www.thameswater.co.uk/news",
     "poll_target_minutes": 30
+  },
+  {
+    "source_id": "PARL-REPORT-API",
+    "url": "https://committees-api.parliament.uk/api/Publications/55076",
+    "adapter": "parliament_api",
+    "expected_publication_id": 55076,
+    "poll_target_minutes": 60,
+    "coverage_scope": "publication_metadata_only",
+    "supports_sources": [
+      "PARL-2026-09"
+    ]
+  },
+  {
+    "source_id": "PARL-PUBLICATIONS-API",
+    "url": "https://committees-api.parliament.uk/api/Publications?CommitteeBusinessId=8765&Take=20&SortOrder=PublicationDateDescending",
+    "adapter": "parliament_api",
+    "response_kind": "publication_list",
+    "poll_target_minutes": 60,
+    "coverage_scope": "latest_20_publications_discovery",
+    "supports_sources": [
+      "PARL-2026-09",
+      "PARL-2026-10",
+      "PARL-2026-11"
+    ]
+  },
+  {
+    "source_id": "GOV-JOINT-PDF",
+    "url": "https://assets.publishing.service.gov.uk/media/6ada0fd1d798ae11e9bc5bd0/Water-industry-performance-insights-A-joint-water-regulator-report.pdf",
+    "poll_target_minutes": 1440,
+    "coverage_scope": "joint_report_not_full_ofwat_dataset",
+    "supports_sources": [
+      "GOV-JOINT-2026",
+      "OFWAT-2026"
+    ]
+  },
+  {
+    "source_id": "GOV-JOINT-NEWS",
+    "url": "https://www.gov.uk/government/news/regulators-publish-first-joint-report-on-water-industry-performance-giving-the-public-a-clearer-picture-of-company-performance",
+    "poll_target_minutes": 60,
+    "coverage_scope": "joint_announcement_not_full_ofwat_dataset",
+    "supports_sources": [
+      "OFWAT-2026"
+    ]
   }
 ]

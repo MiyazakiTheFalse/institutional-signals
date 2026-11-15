@@ -9,6 +9,8 @@ ROUTES = [
     ('original-parliament-oct-news', 'https://committees.parliament.uk/committee/52/environment-food-and-rural-affairs-committee/news/218249/act-decisively-on-thames-water-efra-chair-tells-government/', False),
     ('original-ofwat-report', 'https://www.ofwat.gov.uk/regulated-companies/company-obligations/outcomes/water-company-operational-performance-report-wcopr-2025-26/', False),
     ('parliament-report-api', 'https://committees-api.parliament.uk/api/Publications/55076', True),
+    ('parliament-report-document-api', 'https://committees-api.parliament.uk/api/Publications/55076/Standard/OriginalFormat', True),
+    ('parliament-publications-list', 'https://committees-api.parliament.uk/api/Publications?CommitteeBusinessId=8765&Take=20&SortOrder=PublicationDateDescending', True),
     ('parliament-discovery-api', 'https://committees-api.parliament.uk/api/CommitteeBusiness/8765/Publications/Summary', True),
     ('parliament-report-catalogue', 'https://api.parliament.uk/committees/publications/55076', False),
     ('parliament-news', 'https://committees.parliament.uk/work/8765/reforming-the-water-sector/news/', False),

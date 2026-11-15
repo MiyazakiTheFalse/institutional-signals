@@ -9,7 +9,7 @@ from urllib.error import HTTPError
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
-from collect import collect, LocalStore, packed, PoliteFetch
+from collect import collect, LocalStore, packed, PoliteFetch, SourceTransport
 
 
 class CollectionTests(unittest.TestCase):
@@ -119,6 +119,37 @@ class CollectionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'disallows'):
                 PoliteFetch()('https://example.org/news', {})
             self.assertEqual(get.call_count, 1)
+
+    def test_documented_parliament_api_has_schema_validation(self):
+        url = 'https://committees-api.parliament.uk/api/Publications/55076'
+        transport = SourceTransport([{'url': url, 'adapter': 'parliament_api', 'expected_publication_id': 55076}])
+        with patch('collect.fetch', return_value=(200, {}, b'{"id":55076}')) as get:
+            self.assertEqual(transport(url, {})[0], 200)
+            self.assertEqual(get.call_count, 1)
+        with patch('collect.fetch', return_value=(200, {}, b'{"id":123}')):
+            with self.assertRaisesRegex(ValueError, 'Wrong publication'):
+                transport(url, {})
+
+    def test_api_route_does_not_allow_arbitrary_hosts(self):
+        url = 'https://example.org/api/Publications/55076'
+        transport = SourceTransport([{'url': url, 'adapter': 'parliament_api'}])
+        with patch('collect.fetch') as get:
+            with self.assertRaises(ValueError):
+                transport(url, {})
+            get.assert_not_called()
+
+    def test_supplemental_route_does_not_clear_original_outage(self):
+        sources = self.sources + [{'source_id': 'supplement', 'url': 'https://example.org/api',
+                                  'poll_target_minutes': 60, 'coverage_scope': 'metadata_only',
+                                  'supports_sources': ['official']}]
+        def get(url, headers):
+            if url.endswith('/news'):
+                raise OSError('original unavailable')
+            return 200, {}, b'metadata'
+        result = collect(sources, self.store, get, self.now)
+        self.assertFalse(result['coverage']['safe_to_claim_current'])
+        self.assertEqual(result['health']['official']['status'], 'unavailable')
+        self.assertEqual(result['events'][0]['coverage_scope'], 'metadata_only')
 
 
 if __name__ == '__main__':

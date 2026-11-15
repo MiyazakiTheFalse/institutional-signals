@@ -1,5 +1,9 @@
 name: Collect and archive public sources
 on:
+  push:
+    paths:
+      - config/collection.json
+      - scripts/collect.py
   schedule:
     - cron: '13,43 * * * *'
   workflow_dispatch:

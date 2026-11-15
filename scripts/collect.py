@@ -143,6 +143,34 @@ class PoliteFetch:
         return fetch(url, headers)
 
 
+class SourceTransport:
+    """Use explicitly documented machine APIs, or robots-aware public document access."""
+    def __init__(self, sources):
+        self.sources = {s['url']: s for s in sources}
+        self.polite = PoliteFetch()
+
+    def __call__(self, url, headers):
+        source = self.sources[url]
+        if source.get('adapter') != 'parliament_api':
+            return self.polite(url, headers)
+        parsed = urlsplit(url)
+        if parsed.netloc != 'committees-api.parliament.uk' or not re.fullmatch(
+                r'/api/Publications(?:/[0-9]+(?:/Standard/OriginalFormat)?)?', parsed.path):
+            raise ValueError('Not an allowlisted Parliament API operation')
+        result = fetch(url, {'Accept': 'application/json', **headers})
+        if result[0] == 200:
+            payload = json.loads(result[2])
+            if not isinstance(payload, dict):
+                raise ValueError('Parliament API response must be an object')
+            if source.get('expected_publication_id') is not None:
+                if payload.get('id') != source['expected_publication_id']:
+                    raise ValueError('Wrong publication returned by Parliament API')
+            if source.get('response_kind') == 'publication_list':
+                if not isinstance(payload.get('items'), list):
+                    raise ValueError('Parliament publication list lacks items')
+        return result
+
+
 def collect(sources, store, transport, now=None):
     now = now or datetime.now(timezone.utc)
     if now.utcoffset() != timedelta(0):
@@ -158,7 +186,9 @@ def collect(sources, store, transport, now=None):
             old = {}
         if old.get('next_attempt_at') and datetime.fromisoformat(old['next_attempt_at']) > now:
             continue
-        entry = {**old, 'url': source['url'], 'last_attempt_at': stamp}
+        entry = {**old, 'url': source['url'], 'last_attempt_at': stamp,
+                 'coverage_scope': source.get('coverage_scope', 'original_document'),
+                 'supports_sources': source.get('supports_sources', [])}
         try:
             conditional = {}
             if old.get('etag'):
@@ -181,6 +211,8 @@ def collect(sources, store, transport, now=None):
                                    'previous_sha256': old.get('sha256'),
                                    'original_bytes': len(body), 'compressed_bytes': len(compressed),
                                    'content_type': headers.get('content-type'),
+                                   'coverage_scope': entry['coverage_scope'],
+                                   'supports_sources': entry['supports_sources'],
                                    'review_state': 'unreviewed_content_change'})
                 entry.update(sha256=digest, raw_key=raw_key,
                              etag=headers.get('etag'), last_modified=headers.get('last-modified'))
@@ -234,6 +266,8 @@ def load_sources(path):
             raise ValueError('Polling target must be at least 30 minutes')
         if urlsplit(row['url']).scheme != 'https' or not urlsplit(row['url']).hostname:
             raise ValueError('Invalid source URL')
+        if row.get('adapter', 'public_document') not in ('public_document', 'parliament_api'):
+            raise ValueError('Unknown source adapter')
         seen.add(sid)
     if not sources:
         raise ValueError('No sources configured')
@@ -247,7 +281,8 @@ def main():
     parser.add_argument('--local-dir', default=str(ROOT / '.collection'))
     args = parser.parse_args()
     store = R2Store() if args.store == 'r2' else LocalStore(args.local_dir)
-    report = collect(load_sources(args.config), store, PoliteFetch())
+    sources = load_sources(args.config)
+    report = collect(sources, store, SourceTransport(sources))
     print(json.dumps({'checked_at': report['checked_at'], 'changed': len(report['events']),
                       'health': report['health'], 'coverage': report['coverage'],
                       'source_errors': {sid: row['last_error'] for sid, row in report['sources'].items()
