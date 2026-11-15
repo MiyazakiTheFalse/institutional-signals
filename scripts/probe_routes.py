@@ -43,7 +43,29 @@ if __name__ == '__main__':
             status, headers, body = (fetch if official_api else polite)(url, {'Accept': 'application/json'} if official_api else {})
             record = {'route': name, 'url': url, 'status': status, 'bytes': len(body)}
             if official_api and status == 200:
-                record['schema'] = describe(json.loads(body))
+                payload = json.loads(body)
+                record['schema'] = describe(payload)
             print(json.dumps(record), flush=True)
+            if name == 'parliament-report-api' and status == 200:
+                for document in payload.get('documents', [])[:3]:
+                    for file in document.get('files', [])[:2]:
+                        print(json.dumps({'route': 'parliament-document-descriptor',
+                                          'document_id': document.get('documentId'),
+                                          'format': file.get('format'),
+                                          'file_data_format': file.get('fileDataFormat'),
+                                          'purpose': file.get('documentPurpose'),
+                                          'filename': file.get('fileName')}), flush=True)
+                        purpose = file.get('documentPurpose', {}).get('name')
+                        fmt = file.get('format')
+                        if not purpose or not fmt:
+                            continue
+                        from urllib.parse import quote
+                        doc_url = f'https://committees-api.parliament.uk/api/Publications/55076/{quote(purpose, safe="")}/{quote(fmt, safe="")}'
+                        try:
+                            code, _, raw = fetch(doc_url, {'Accept': 'application/json'})
+                            print(json.dumps({'route': 'parliament-document-resolved', 'url': doc_url,
+                                              'status': code, 'schema': describe(json.loads(raw))}), flush=True)
+                        except (OSError, ValueError) as exc:
+                            print(json.dumps({'route': 'parliament-document-resolved', 'url': doc_url, 'error': str(exc)}), flush=True)
         except (OSError, ValueError) as exc:
             print(json.dumps({'route': name, 'url': url, 'error': str(exc)}), flush=True)
