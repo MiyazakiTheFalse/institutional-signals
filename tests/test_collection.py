@@ -161,9 +161,10 @@ class CollectionTests(unittest.TestCase):
                 transport(url, {})
 
     def test_parliament_document_returns_only_verified_format_bytes(self):
-        url = 'https://committees-api.parliament.uk/api/Publications/55076/Standard/OriginalFormat'
+        url = 'https://committees-api.parliament.uk/api/Publications/55076/Document/305807/OriginalFormat'
         source = {'url': url, 'adapter': 'parliament_document',
-                  'expected_publication_id': 55076, 'response_kind': 'pdf'}
+                  'expected_publication_id': 55076, 'expected_document_id': 305807,
+                  'response_kind': 'pdf'}
         transport = SourceTransport([source])
         with patch('collect.fetch', return_value=(200, {'Content-Type': 'application/pdf'}, b'%PDF-1.7\\ncontent')) as fetch_mock:
             code, _, body = transport(url, {})
@@ -181,16 +182,31 @@ class CollectionTests(unittest.TestCase):
 
     def test_parliament_document_blocks_unapproved_hosts_and_operations(self):
         for url in (
-            'https://example.org/api/Publications/55076/Standard/OriginalFormat',
-            'https://committees-api.parliament.uk/api/Publications/55077/Standard/OriginalFormat',
-            'https://committees-api.parliament.uk/api/Publications/55076/Standard/OriginalFormat?extra=1',
+            'https://example.org/api/Publications/55076/Document/305807/OriginalFormat',
+            'https://committees-api.parliament.uk/api/Publications/55077/Document/305807/OriginalFormat',
+            'https://committees-api.parliament.uk/api/Publications/55076/Document/999999/OriginalFormat',
+            'https://committees-api.parliament.uk/api/Publications/55076/Document/305807/OriginalFormat?extra=1',
         ):
             with self.subTest(url=url), patch('collect.fetch') as request:
                 transport = SourceTransport([{'url': url, 'adapter': 'parliament_document',
-                                              'expected_publication_id': 55076, 'response_kind': 'pdf'}])
+                                              'expected_publication_id': 55076, 'expected_document_id': 305807,
+                                              'response_kind': 'pdf'}])
                 with self.assertRaisesRegex(ValueError, 'allowlisted'):
                     transport(url, {})
                 request.assert_not_called()
+
+    def test_parliament_format_based_pdf_route_is_strict(self):
+        url = 'https://committees-api.parliament.uk/api/Publications/55076/Standard/pdf'
+        source = {'url': url, 'adapter': 'parliament_document',
+                  'expected_publication_id': 55076, 'response_kind': 'pdf'}
+        transport = SourceTransport([source])
+        with patch('collect.fetch', return_value=(200, {'Content-Type': 'application/pdf'}, b'%PDF-1.7\\nreport')):
+            self.assertEqual(transport(url, {})[0], 200)
+        wrong = 'https://committees-api.parliament.uk/api/Publications/55076/Standard/OriginalFormat'
+        with patch('collect.fetch') as requested:
+            with self.assertRaisesRegex(ValueError, 'allowlisted'):
+                SourceTransport([{**source, 'url': wrong}])(wrong, {})
+            requested.assert_not_called()
 
     def test_access_denials_wait_one_day_before_retrying(self):
         attempts = []
