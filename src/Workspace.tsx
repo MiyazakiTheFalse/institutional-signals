@@ -3,7 +3,22 @@ import React from 'react'
 type Review = { id: string; decision: string; note: string; reviewer: string; reviewed_at: string }
 type Submission = { id: string; owner?: string; filename: string; state: string; scan_state: string; received_at: string; source_url?: string; reviews?: Review[] }
 export type EvidenceRequest = { request_id: string; document: string; why: string; instructions: string; accepted_formats: string[] }
-export type LiveStatus = { checked_at: string; fetched_at: string; stale: boolean; coverage: number; upload_requests: EvidenceRequest[]; sources: { id: string; last_success_at?: string; consecutive_failures?: number }[] }
+type RecentChange = { source_id: string; observed_at: string; sha256: string; previous_sha256: string | null; review_state: 'unreviewed_content_change'; coverage_scope: string }
+export type LiveStatus = {
+  checked_at: string; fetched_at: string; stale: boolean;
+  coverage: { fraction_current: number; safe_to_claim_current: boolean };
+  upload_requests: EvidenceRequest[];
+  sources: { id: string; last_success_at?: string; consecutive_failures?: number; last_error_code?: string | null }[];
+  recent_changes?: RecentChange[]; recent_changes_limited?: boolean;
+}
+function sourceErrorLabel(code: string | null | undefined) {
+  if (!code) return null
+  if (/^http_[45][0-9]{2}$/.test(code)) return 'Publisher returned HTTP ' + code.slice(5)
+  if (code === 'robots_disallowed') return 'Publisher robots policy disallows automated retrieval'
+  if (code === 'validation_error') return 'Source validation failed'
+  if (code === 'network_error') return 'Network retrieval failed'
+  return 'Retrieval issue'
+}
 declare global {
   interface Window {
     institutionalDesktop?: {
@@ -91,7 +106,21 @@ export function Workspace({ onStatus }: { onStatus: (status: LiveStatus | null) 
       <button disabled={busy} type="submit">Connect workspace</button>
     </form> : <div className="workspace-actions"><button disabled={busy} onClick={() => void refresh().catch(() => { setStatus(null); setMessage('Refresh failed. Previously displayed collection status is no longer treated as live.') })}>Refresh</button><button onClick={async () => { await desktop().disconnect(); setConnected(false); setStatus(null); setRemote([]); setMessage('Disconnected. Local evidence is retained.') }}>Disconnect</button></div>}
     <p role="status">{message}</p>
-    {status && <div><h3>{status.stale ? 'Collection delayed — forecasts remain on hold' : 'Collector status received'}</h3><p>Last collection: {new Date(status.checked_at).toLocaleString()}. This is collection health, not approval of evidence.</p><ul>{status.sources.map(s => <li key={s.id}><b>{s.id}</b> · {s.consecutive_failures ? 'Retrieval failure' : 'Last successful check'} · {s.last_success_at ? new Date(s.last_success_at).toLocaleString() : 'Never checked successfully'}</li>)}</ul></div>}
+    {status && <div>
+      <h3>{status.stale || !status.coverage?.safe_to_claim_current ? 'Collection incomplete — forecasts remain on hold' : 'Collection checks current — evidence review still required'}</h3>
+      <p>Collector checked: {new Date(status.checked_at).toLocaleString()}. This is retrieval health, not a claim that any document has been verified or that the model is up to date.</p>
+      <p>Required source-check coverage: {typeof status.coverage?.fraction_current === 'number' ? Math.round(status.coverage.fraction_current * 100) + '%' : 'Unknown'}. Sources with restricted access remain unresolved even if an alternative document can be fetched.</p>
+      <ul>{status.sources.map(s => <li key={s.id}><b>{s.id}</b> · {sourceErrorLabel(s.last_error_code) || (s.consecutive_failures ? 'Retrieval failure' : 'No current retrieval error')} · Last successful check: {s.last_success_at ? new Date(s.last_success_at).toLocaleString() : 'Never'}</li>)}</ul>
+      <h3>Recent document changes awaiting review</h3>
+      <p>These are observed changes to source content, not verified institutional events. Every new claim requires independent evidence review.</p>
+      {!status.recent_changes?.length && <p>No changes in the available recent-change index. This is not evidence that no new publication exists.</p>}
+      {status.recent_changes?.map((item, index) => <article key={item.source_id + ':' + item.sha256 + ':' + index}>
+        <h4>{item.source_id} · Unreviewed source change</h4>
+        <p>Observed {new Date(item.observed_at).toLocaleString()} · Archived version {item.sha256.slice(0, 12)}… · Scope: {item.coverage_scope.replaceAll('_', ' ')}</p>
+        <small>{item.previous_sha256 ? 'Previous archived version exists; review the differences before updating facts.' : 'First captured version; review publication context before extracting claims.'}</small>
+      </article>)}
+      {status.recent_changes_limited && <p>This is a bounded recent-change index, not a complete audit archive.</p>}
+    </div>}
     <h3>Submission queue</h3>
     {!local.length && <p>No documents imported yet. Choose a missing evidence request above to begin.</p>}
     {local.map(item => { const uploaded = remote.find(r => r.id === item.id); return <article key={item.id}><h4>{item.filename}</h4><p>{uploaded ? `Cloud: ${uploaded.state} · Scan: ${uploaded.scan_state}` : 'On this device · Not confirmed in this workspace'} · Imported {new Date(item.received_at).toLocaleString()}</p>{!uploaded && <button disabled={!connected || busy} onClick={async () => {
