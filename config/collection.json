@@ -76,5 +76,60 @@
     "supports_sources": [
       "OFWAT-2026"
     ]
+  },
+  {
+    "source_id": "PARL-REPORT-PDF-API",
+    "url": "https://committees-api.parliament.uk/api/Publications/55076/Standard/OriginalFormat",
+    "adapter": "parliament_document",
+    "response_kind": "pdf",
+    "expected_publication_id": 55076,
+    "poll_target_minutes": 1440,
+    "required_for_health": false,
+    "coverage_scope": "publication_55076_original_document_candidate_needs_verification",
+    "supports_sources": [
+      "PARL-2026-09"
+    ]
+  },
+  {
+    "source_id": "PARL-EFRA-PUBLICATIONS",
+    "url": "https://committees.parliament.uk/committee/52/environment-food-and-rural-affairs-committee/publications/",
+    "poll_target_minutes": 1440,
+    "required_for_health": false,
+    "coverage_scope": "committee_publication_index_not_specific_report_body",
+    "supports_sources": [
+      "PARL-2026-09",
+      "PARL-2026-10",
+      "PARL-2026-11"
+    ]
+  },
+  {
+    "source_id": "OFWAT-REPORT-PUBLICATION",
+    "url": "https://www.ofwat.gov.uk/publication/water-company-operational-performance-report-2025-26/",
+    "poll_target_minutes": 1440,
+    "required_for_health": false,
+    "coverage_scope": "official_report_landing_not_downloaded_report",
+    "supports_sources": [
+      "OFWAT-2026"
+    ]
+  },
+  {
+    "source_id": "OFWAT-DATA-PUBLICATION",
+    "url": "https://www.ofwat.gov.uk/publication/data-for-the-water-company-operational-performance-report-2025-26-open-data-friendly-machine-readable-format/",
+    "poll_target_minutes": 1440,
+    "required_for_health": false,
+    "coverage_scope": "machine_readable_dataset_landing_not_dataset_bytes",
+    "supports_sources": [
+      "OFWAT-2026"
+    ]
+  },
+  {
+    "source_id": "OFWAT-DATA-DICTIONARY",
+    "url": "https://www.ofwat.gov.uk/publication/data-for-the-water-company-operational-performance-report-2025-26-open-data-data-dictionary/",
+    "poll_target_minutes": 1440,
+    "required_for_health": false,
+    "coverage_scope": "data_dictionary_landing_not_dataset_bytes",
+    "supports_sources": [
+      "OFWAT-2026"
+    ]
   }
 ]
