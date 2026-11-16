@@ -66,6 +66,10 @@ def probe(sources, transport):
                 row['document_descriptors'] = document_descriptor_hints(json.loads(body))
         except (OSError, ValueError) as exc:
             row.update(result='unavailable', failure_code=failure_code(exc))
+            if sid in ('PARL-REPORT-PDF-API', 'PARL-REPORT-PDF-FORMAT') and isinstance(exc, ValueError):
+                detail = str(exc)
+                if detail.startswith('Parliament document response is not a PDF (mime='):
+                    row['format_diagnostic'] = detail[:160]
             if isinstance(exc, HTTPError):
                 row['http_status'] = exc.code
                 exc.close()
