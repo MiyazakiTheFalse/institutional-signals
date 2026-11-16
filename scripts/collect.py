@@ -6,6 +6,8 @@ Run only one writer per storage prefix (the Actions concurrency group enforces i
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 import gzip
 import hashlib
 import json
@@ -183,10 +185,26 @@ class SourceTransport:
             if result[0] == 200:
                 mime = next((v for k, v in result[1].items()
                              if k.lower() == 'content-type'), '').lower().split(';')[0].strip()
-                if not result[2].startswith(b'%PDF-') or mime not in ('', 'application/pdf', 'application/octet-stream'):
+                body = result[2]
+                if mime == 'application/json':
+                    # Parliament's official document endpoint wraps PDF bytes as
+                    # {"data": "<base64 PDF>"}. Reject other JSON shapes.
+                    try:
+                        envelope = json.loads(body)
+                        if not isinstance(envelope, dict) or not isinstance(envelope.get('data'), str):
+                            raise ValueError('Missing base64 PDF data')
+                        body = base64.b64decode(envelope['data'], validate=True)
+                    except (ValueError, binascii.Error, UnicodeDecodeError) as exc:
+                        raise ValueError('Invalid Parliament JSON document envelope') from exc
+                    if len(body) > MAX_BYTES:
+                        raise ValueError('Decoded Parliament PDF exceeds archival limit')
+                    result = (result[0], {k: v for k, v in result[1].items()
+                                          if k.lower() != 'content-type'} | {'Content-Type': 'application/pdf'}, body)
+                    mime = 'application/pdf'
+                if not body.startswith(b'%PDF-') or mime not in ('', 'application/pdf', 'application/octet-stream'):
                     # Only bounded format metadata, never document bytes or upstream tokens.
                     safe_mime = re.sub(r'[^a-z0-9/.-]', '', mime)[:64]
-                    signature = result[2][:12].hex()
+                    signature = body[:12].hex()
                     raise ValueError(f'Parliament document response is not a PDF (mime={safe_mime}, prefix_hex={signature})')
             return result
         if adapter != 'parliament_api' or not re.fullmatch(
