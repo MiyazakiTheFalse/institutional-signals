@@ -1,6 +1,6 @@
 # Official source access and recovery — November 2026
 
-**Status:** Implemented alternative route discovery and safety checks. These are not a guarantee that a publisher will allow automated retrieval from GitHub-hosted runners.
+**Status (16 November 2026):** The official Parliament API document operations are verified retrievable from the standard GitHub runner (HTTP 200; a 415,526-byte decoded PDF), but the downloaded contents remain **unreviewed**. Original Parliament/Ofwat HTML pages still return 403. Ofwat's complete machine-readable dataset remains unavailable to the collector.
 
 ## Known failures
 
@@ -12,17 +12,18 @@ A 403 must **not** be treated as a CAPTCHA or rate limit to defeat. The collecto
 
 | New source ID | Official route | Content scope | Forecast evidence? |
 | --- | --- | --- | --- |
-| `PARL-REPORT-PDF-API` | UK Parliament Committees API, `/api/Publications/55076/Standard/OriginalFormat` | Original-format report **candidate**, accepted only when response passes PDF signature and MIME validation | Only after a reviewer confirms it is the correct full report and records evidence provenance |
+| `PARL-REPORT-PDF-API` | UK Parliament Committees API, `/api/Publications/55076/Document/305807/OriginalFormat` | Original-format report **candidate**; official JSON base64 PDF envelope decoded with strict schema, signature and size validation | Only after a reviewer confirms that the 415,526-byte document is the correct full report and records evidence provenance |
+| `PARL-REPORT-PDF-FORMAT` | UK Parliament Committees API, `/api/Publications/55076/Standard/pdf` | Alternate official format-based request for the same publication; retrieved candidate, not independent evidence | Same review requirement; deduplicate using underlying primary document identity |
 | `PARL-EFRA-PUBLICATIONS` | Committee's official publications index | Publication discovery only | No; not a substitute for original report or news text |
 | `OFWAT-REPORT-PUBLICATION` | Ofwat's publication record for 2025–26 operational performance | Report download landing page | No; landing page is not report bytes |
 | `OFWAT-DATA-PUBLICATION` | Ofwat's official open-data machine-readable-format publication record | Dataset download landing page | No; not the dataset itself |
 | `OFWAT-DATA-DICTIONARY` | Ofwat's corresponding official dictionary publication record | Metadata/dictionary landing page | No; not the underlying dataset |
 
-The UK Parliament publishes a supported Committees API; the exact report-document operation must still succeed on the runner and be reviewed before equivalence is established. Ofwat has distinct report, open-data and dictionary publication records. Each is separately monitored and labelled by scope. Do not promote an alternative because its URL *looks* related.
+The Committees API publication metadata identifies document 305807 and filename *HC 664 - Amended The future of Thames Water-online.pdf*. Both documented PDF operations succeeded in a standard runner probe after decoding a JSON envelope whose `data` field contains base64-encoded PDF bytes. Format success does **not** automatically establish document contents or future predictive relevance. Ofwat has distinct report, open-data and dictionary publication records. Each is separately monitored and labelled by scope. Do not promote an alternative because its URL *looks* related.
 
 ## Implemented safeguards
 
-- Explicit, allowlisted source host and publication-document operation. The document adapter requests PDF and rejects HTML challenges, other binary formats and a mismatching document URL.
+- Explicit, allowlisted source host and publication-document operation. The document adapter accepts either raw PDF or the **official JSON base64 PDF envelope** with strict decoding, signature, MIME and size checks. HTML challenges, malformed base64, unrelated JSON and mismatched document URLs are rejected.
 - Exactly one request per source per diagnostics run; no brute-force retry loops.
 - Access-denied responses (401/403) cause at least 24 hours' collection backoff.
 - Supplemental discovery routes remain optional for *source-health coverage*; their success cannot mark an original 403 route healthy.
