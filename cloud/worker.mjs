@@ -39,6 +39,27 @@ async function readJSON(bucket, key, compressed = false) {
   const body = Buffer.from(await object.arrayBuffer())
   return JSON.parse((compressed ? gunzipSync(body, { maxOutputLength: 4 * 1024 * 1024 }) : body).toString('utf8'))
 }
+const SAFE_FAILURE_CODE = /^(?:http_[45][0-9]{2}|robots_disallowed|validation_error|network_error)$/
+const SAFE_SOURCE_ID = /^[A-Za-z0-9_-]{1,64}$/
+const SAFE_HASH = /^[a-f0-9]{64}$/
+
+function publicChanges(report) {
+  // Source snapshots may contain untrusted response metadata; expose only explicit fields.
+  if (!Array.isArray(report?.recent_changes)) return []
+  const known = new Set(Object.keys(report.sources || {}))
+  return report.recent_changes.slice(0, 100).filter(c =>
+    c && SAFE_SOURCE_ID.test(c.source_id) && known.has(c.source_id) &&
+    SAFE_HASH.test(c.sha256) && typeof c.observed_at === 'string' &&
+    Number.isFinite(Date.parse(c.observed_at)) && c.review_state === 'unreviewed_content_change'
+  ).map(c => ({
+    source_id: c.source_id, observed_at: c.observed_at, sha256: c.sha256,
+    previous_sha256: SAFE_HASH.test(c.previous_sha256) ? c.previous_sha256 : null,
+    review_state: 'unreviewed_content_change',
+    coverage_scope: typeof c.coverage_scope === 'string' && c.coverage_scope.length <= 80
+      ? c.coverage_scope : 'unspecified',
+  }))
+}
+
 const manifestKey = (user, id) => `submissions/${user}/${id}/manifest.json`
 async function submission(env, user, id, owner = user.id) {
   if (!ID.test(id) || !/^[a-zA-Z0-9_-]{1,64}$/.test(owner)) throw new Rejection(400, 'Invalid submission')
@@ -67,7 +88,13 @@ export default {
         const age = Date.now() - Date.parse(report.checked_at)
         const stale = !Number.isFinite(age) || age < 0 || age > 90 * 60000
         return json({ checked_at: report.checked_at, fetched_at: new Date().toISOString(), stale, coverage: report.coverage,
-          sources: Object.entries(report.sources).map(([id, s]) => ({ id, last_attempt_at: s.last_attempt_at, last_success_at: s.last_success_at, consecutive_failures: s.consecutive_failures })),
+          sources: Object.entries(report.sources).filter(([id]) => SAFE_SOURCE_ID.test(id)).map(([id, s]) => ({
+            id, last_attempt_at: s.last_attempt_at, last_success_at: s.last_success_at,
+            consecutive_failures: s.consecutive_failures,
+            last_error_code: SAFE_FAILURE_CODE.test(s.last_error_code) ? s.last_error_code : null
+          })),
+          recent_changes: publicChanges(report),
+          recent_changes_limited: Number.isInteger(report.recent_changes_limit),
           gates, upload_requests: requests })
       }
       if (request.method === 'GET' && url.pathname === '/v1/submissions') {
