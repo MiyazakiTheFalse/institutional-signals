@@ -79,16 +79,17 @@
   },
   {
     "source_id": "PARL-REPORT-PDF-API",
-    "url": "https://committees-api.parliament.uk/api/Publications/55076/Standard/OriginalFormat",
+    "url": "https://committees-api.parliament.uk/api/Publications/55076/Document/305807/OriginalFormat",
     "adapter": "parliament_document",
     "response_kind": "pdf",
     "expected_publication_id": 55076,
     "poll_target_minutes": 1440,
     "required_for_health": false,
-    "coverage_scope": "publication_55076_original_document_candidate_needs_verification",
+    "coverage_scope": "publication_55076_document_305807_pdf_candidate_needs_verification",
     "supports_sources": [
       "PARL-2026-09"
-    ]
+    ],
+    "expected_document_id": 305807
   },
   {
     "source_id": "PARL-EFRA-PUBLICATIONS",
@@ -130,6 +131,19 @@
     "coverage_scope": "data_dictionary_landing_not_dataset_bytes",
     "supports_sources": [
       "OFWAT-2026"
+    ]
+  },
+  {
+    "source_id": "PARL-REPORT-PDF-FORMAT",
+    "url": "https://committees-api.parliament.uk/api/Publications/55076/Standard/pdf",
+    "adapter": "parliament_document",
+    "response_kind": "pdf",
+    "expected_publication_id": 55076,
+    "poll_target_minutes": 1440,
+    "required_for_health": false,
+    "coverage_scope": "publication_55076_standard_pdf_candidate_needs_verification",
+    "supports_sources": [
+      "PARL-2026-09"
     ]
   }
 ]
