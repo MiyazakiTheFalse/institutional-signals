@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -110,6 +111,48 @@ def validate_and_export() -> dict:
     gates = evaluate_cases(cases, collection_sources, {}, reviewed, datetime(2026, 11, 15, tzinfo=timezone.utc))
     graph = json.loads((DATA / 'knowledge_graph.json').read_text(encoding='utf-8'))
     validate_graph(graph, src_ids)
+    query_cases = read_json('query_cases.json')
+    graph_nodes = {n['id'] for n in graph['nodes']}
+    observation_map = {row['id']: row for row in observations}
+    case_ids = set()
+    seen_aliases = set()
+    for case in query_cases:
+        if not isinstance(case, dict):
+            raise ValueError('Query case must be an object')
+        case_id = case.get('id')
+        if not isinstance(case_id, str) or not re.fullmatch(r'[a-z0-9][a-z0-9-]{2,63}', case_id):
+            raise ValueError('Invalid query case ID')
+        if case_id in case_ids:
+            raise ValueError('Duplicate query case ID')
+        case_ids.add(case_id)
+        for field in ('title', 'summary', 'domain', 'geography'):
+            if not isinstance(case.get(field), str) or not case[field].strip() or len(case[field]) > 500:
+                raise ValueError(f'Invalid query case {field}: {case_id}')
+        if case.get('readiness') != 'research_only':
+            raise ValueError(f'Query case cannot claim verification or forecast readiness: {case_id}')
+        for field in ('aliases', 'topics', 'source_ids', 'observation_ids', 'entity_ids'):
+            values = case.get(field)
+            if not isinstance(values, list) or len(values) > 500 or any(
+                    not isinstance(v, str) or not v.strip() or len(v) > 160 for v in values):
+                raise ValueError(f'Invalid query case {field}: {case_id}')
+            if len(set(values)) != len(values):
+                raise ValueError(f'Duplicate query case {field}: {case_id}')
+        if not case['aliases']:
+            raise ValueError(f'Query case needs at least one alias: {case_id}')
+        for alias in case['aliases']:
+            normalized = ' '.join(re.findall(r'[a-z0-9]+', alias.lower()))
+            if len(normalized) < 3 or normalized in seen_aliases:
+                raise ValueError(f'Ambiguous or invalid query alias: {alias}')
+            seen_aliases.add(normalized)
+        if not set(case['source_ids']).issubset(src_ids):
+            raise ValueError(f'Query case has unknown sources: {case_id}')
+        if not set(case['observation_ids']).issubset(observation_map):
+            raise ValueError(f'Query case has unknown observations: {case_id}')
+        if any(not set(observation_map[oid]['source_ids']).issubset(case['source_ids'])
+               for oid in case['observation_ids']):
+            raise ValueError(f'Query case observations reference out-of-case evidence: {case_id}')
+        if not set(case['entity_ids']).issubset(graph_nodes):
+            raise ValueError(f'Query case has unknown graph entities: {case_id}')
     return {
         "project": "Institutional Signals",
         "dataset_version": "0.1",
@@ -121,6 +164,7 @@ def validate_and_export() -> dict:
         "upload_requests": requests_for(cases, gates),
         "readiness_mode": "static_requirements_only_not_live_coverage",
         "knowledge_graph": graph,
+        "query_cases": sorted(query_cases, key=lambda case: case['id']),
     }
 
 
