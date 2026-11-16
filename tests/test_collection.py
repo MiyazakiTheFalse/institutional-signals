@@ -1,3 +1,4 @@
+import base64
 import gzip
 import json
 import sys
@@ -194,6 +195,28 @@ class CollectionTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'allowlisted'):
                     transport(url, {})
                 request.assert_not_called()
+
+    def test_parliament_json_enveloped_pdf_decodes_to_verified_bytes(self):
+        url = 'https://committees-api.parliament.uk/api/Publications/55076/Document/305807/OriginalFormat'
+        source = {'url': url, 'adapter': 'parliament_document',
+                  'expected_publication_id': 55076, 'expected_document_id': 305807,
+                  'response_kind': 'pdf'}
+        transport = SourceTransport([source])
+        pdf = b'%PDF-1.7\\nExample official report\\n%%EOF'
+        wrapped = json.dumps({'data': base64.b64encode(pdf).decode('ascii')}).encode()
+        with patch('collect.fetch', return_value=(200, {'Content-Type': 'application/json'}, wrapped)):
+            status, headers, body = transport(url, {})
+            self.assertEqual(status, 200)
+            self.assertEqual(body, pdf)
+            self.assertEqual(headers['Content-Type'], 'application/pdf')
+        for invalid in (
+            b'{"data":"invalid-base64?!"}',
+            b'{"data":"PGh0bWw+PHNlY3JldD48L2h0bWw+"}',
+            b'{"unrelated":"metadata"}',
+        ):
+            with self.subTest(value=invalid[:30]), patch('collect.fetch', return_value=(200, {'content-type': 'application/json'}, invalid)):
+                with self.assertRaises(ValueError):
+                    transport(url, {})
 
     def test_parliament_format_based_pdf_route_is_strict(self):
         url = 'https://committees-api.parliament.uk/api/Publications/55076/Standard/pdf'
