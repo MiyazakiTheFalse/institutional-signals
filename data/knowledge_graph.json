@@ -1,8 +1,126 @@
 {
-  "version": "0.1",
+  "version": "0.2",
   "nodes": [
-    {"id":"thames-water","type":"institution","label":"Thames Water"},
-    {"id":"ofwat","type":"public_body","label":"Ofwat"}
+    {
+      "id": "thames-water",
+      "type": "institution",
+      "label": "Thames Water"
+    },
+    {
+      "id": "ofwat",
+      "type": "public_body",
+      "label": "Ofwat"
+    },
+    {
+      "id": "efra-committee",
+      "type": "public_body",
+      "label": "House of Commons EFRA Committee"
+    },
+    {
+      "id": "thames-water-recapitalisation-2026",
+      "type": "document",
+      "label": "Thames Water recapitalisation update (9 November 2026)"
+    },
+    {
+      "id": "ofwat-operational-performance-2025-26",
+      "type": "document",
+      "label": "Ofwat operational performance report 2025–26"
+    },
+    {
+      "id": "efra-thames-water-report-2026",
+      "type": "document",
+      "label": "EFRA Committee report on Thames Water (September 2026)"
+    },
+    {
+      "id": "efra-water-reform-summary-2026",
+      "type": "document",
+      "label": "EFRA Committee water sector reform summary (November 2026)"
+    }
   ],
-  "edges": []
+  "edges": [
+    {
+      "edge_id": "publication-tw-2026-11-09",
+      "subject_id": "thames-water",
+      "predicate": "issued",
+      "object_id": "thames-water-recapitalisation-2026",
+      "evidence_ids": [
+        "TW-2026-11-09"
+      ],
+      "valid_from": "2026-11-09T23:59:59Z",
+      "valid_to": null,
+      "published_at": "2026-11-09T23:59:59Z",
+      "first_observed_at": "2026-11-15T23:59:59Z",
+      "recorded_at": "2026-11-16T14:00:52.682Z",
+      "reviewed_at": "2026-11-16T14:00:52.682Z",
+      "review_state": "verified",
+      "assertion_type": "documented_fact",
+      "scope": "Publisher attribution from the existing curated, verified source register; not an assessment of document contents.",
+      "limitations": "Publication and verification dates have day precision; the last second of the UTC day is used conservatively for historical replay. Attribution alone does not establish an institution's decisions, influence, motives, or wrongdoing.",
+      "independence_group": "TW-2026-11-09",
+      "review_method": "source_register_publisher_attribution"
+    },
+    {
+      "edge_id": "publication-ofwat-2026",
+      "subject_id": "ofwat",
+      "predicate": "issued",
+      "object_id": "ofwat-operational-performance-2025-26",
+      "evidence_ids": [
+        "OFWAT-2026"
+      ],
+      "valid_from": "2026-10-29T23:59:59Z",
+      "valid_to": null,
+      "published_at": "2026-10-29T23:59:59Z",
+      "first_observed_at": "2026-11-15T23:59:59Z",
+      "recorded_at": "2026-11-16T14:00:52.682Z",
+      "reviewed_at": "2026-11-16T14:00:52.682Z",
+      "review_state": "verified",
+      "assertion_type": "documented_fact",
+      "scope": "Publisher attribution from the existing curated, verified source register; not an assessment of document contents.",
+      "limitations": "Publication and verification dates have day precision; the last second of the UTC day is used conservatively for historical replay. Attribution alone does not establish an institution's decisions, influence, motives, or wrongdoing.",
+      "independence_group": "OFWAT-2026",
+      "review_method": "source_register_publisher_attribution"
+    },
+    {
+      "edge_id": "publication-parl-2026-09",
+      "subject_id": "efra-committee",
+      "predicate": "issued",
+      "object_id": "efra-thames-water-report-2026",
+      "evidence_ids": [
+        "PARL-2026-09"
+      ],
+      "valid_from": "2026-09-18T23:59:59Z",
+      "valid_to": null,
+      "published_at": "2026-09-18T23:59:59Z",
+      "first_observed_at": "2026-11-15T23:59:59Z",
+      "recorded_at": "2026-11-16T14:00:52.682Z",
+      "reviewed_at": "2026-11-16T14:00:52.682Z",
+      "review_state": "verified",
+      "assertion_type": "documented_fact",
+      "scope": "Publisher attribution from the existing curated, verified source register; not an assessment of document contents.",
+      "limitations": "Publication and verification dates have day precision; the last second of the UTC day is used conservatively for historical replay. Attribution alone does not establish an institution's decisions, influence, motives, or wrongdoing.",
+      "independence_group": "PARL-2026-09",
+      "review_method": "source_register_publisher_attribution"
+    },
+    {
+      "edge_id": "publication-parl-2026-11",
+      "subject_id": "efra-committee",
+      "predicate": "issued",
+      "object_id": "efra-water-reform-summary-2026",
+      "evidence_ids": [
+        "PARL-2026-11"
+      ],
+      "valid_from": "2026-11-04T23:59:59Z",
+      "valid_to": null,
+      "published_at": "2026-11-04T23:59:59Z",
+      "first_observed_at": "2026-11-15T23:59:59Z",
+      "recorded_at": "2026-11-16T14:00:52.682Z",
+      "reviewed_at": "2026-11-16T14:00:52.682Z",
+      "review_state": "verified",
+      "assertion_type": "documented_fact",
+      "scope": "Publisher attribution from the existing curated, verified source register; not an assessment of document contents.",
+      "limitations": "Publication and verification dates have day precision; the last second of the UTC day is used conservatively for historical replay. Attribution alone does not establish an institution's decisions, influence, motives, or wrongdoing.",
+      "independence_group": "PARL-2026-11",
+      "review_method": "source_register_publisher_attribution"
+    }
+  ]
 }
