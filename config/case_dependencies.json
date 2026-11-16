@@ -23,6 +23,9 @@
           },
           {
             "source_id": "PARL-REPORT-PDF-API"
+          },
+          {
+            "source_id": "PARL-REPORT-PDF-FORMAT"
           }
         ]
       },
