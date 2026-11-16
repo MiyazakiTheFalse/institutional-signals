@@ -253,6 +253,7 @@ function App() {
   function navigate(target: Page) {
     setPage(target)
     window.scrollTo({ top: 0, behavior: 'auto' })
+    requestAnimationFrame(() => document.getElementById('main-content')?.focus({ preventScroll: true }))
   }
   return <div className="app">
     <a className="skip-link" href="#main-content">Skip to main content</a>
@@ -269,6 +270,9 @@ function App() {
         onClick={() => navigate(item.key)}>{item.label}</button>)}</div>
     </nav>
     <main className="container workstation-main" id="main-content" tabIndex={-1}>
+      <div className="sr-only" role="status" aria-live="polite">
+        Viewing {NAV.find(item => item.key === page)?.label} research view
+      </div>
       {error && <div className="message" role="alert">The curated data could not be loaded. Please reopen the app or reinstall a tested build.</div>}
       {!data && !error && <p className="message" role="status">Loading research dataset…</p>}
       {data && <>
