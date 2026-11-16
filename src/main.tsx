@@ -2,11 +2,14 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles.css'
 import './workstation.css'
+import './query.css'
 import { ImportEvidence, Workspace, type LiveStatus } from './Workspace'
 import { Research, type Graph } from './Research'
+import { QueryResearch } from './Query'
+import { type QueryCase } from './queryEngine'
 
 type Source = {
-  id: string; title: string; publisher: string; published_at: string;
+  id: string; title: string; publisher: string; published_at: string; verified_at: string;
   url: string; type: string; reliability_note: string
 }
 type Observation = {
@@ -23,13 +26,14 @@ type UploadRequest = {
   instructions: string; accepted_formats: string[]
 }
 type Dataset = {
-  as_of: string; notice: string; sources: Source[]; observations: Observation[];
+  as_of: string; notice: string; query_cases: QueryCase[]; sources: Source[]; observations: Observation[];
   forecasts: Forecast[]; upload_requests: UploadRequest[]; knowledge_graph: Graph
 }
-type Page = 'overview' | 'timeline' | 'relationships' | 'evidence' | 'forecasts' | 'workspace'
+type Page = 'overview' | 'ask' | 'timeline' | 'relationships' | 'evidence' | 'forecasts' | 'workspace'
 type NavItem = { key: Page; label: string }
 const NAV: NavItem[] = [
   { key: 'overview', label: 'Overview' },
+  { key: 'ask', label: 'Ask a question' },
   { key: 'timeline', label: 'Timeline' },
   { key: 'relationships', label: 'Relationships' },
   { key: 'evidence', label: 'Evidence' },
@@ -47,7 +51,7 @@ function validateDataset(value: unknown): Dataset {
   if (!value || typeof value !== 'object') throw new Error('Invalid dataset')
   const d = value as Dataset
   if (typeof d.as_of !== 'string' || typeof d.notice !== 'string') throw new Error('Invalid metadata')
-  for (const rows of [d.sources, d.observations, d.forecasts, d.upload_requests]) {
+  for (const rows of [d.sources, d.observations, d.forecasts, d.upload_requests, d.query_cases]) {
     if (!Array.isArray(rows) || rows.length > 10000) throw new Error('Invalid collection')
   }
   if (d.sources.some(s => !s || typeof s.id !== 'string' || typeof s.url !== 'string' || !safeLink(s.url))) throw new Error('Invalid source link')
@@ -78,7 +82,8 @@ function Overview({ data, live, go }: { data: Dataset; live: LiveStatus | null; 
         <h1>Understand the institutions.<br/><em>Trace the evidence.</em></h1>
         <p className="subtitle">Explore what has actually been documented, how institutions are connected, and what evidence is still missing before any prediction can be trusted.</p>
         <div className="hero-actions">
-          <button type="button" onClick={() => go('relationships')}>Explore relationships</button>
+          <button type="button" onClick={() => go('ask')}>Ask a research question</button>
+          <button type="button" className="secondary-action" onClick={() => go('relationships')}>Explore relationships</button>
           <button type="button" className="secondary-action" onClick={() => go('timeline')}>View event timeline</button>
         </div>
       </div>
@@ -284,6 +289,10 @@ function App() {
           </section>}
           <Overview data={data} live={live} go={navigate}/>
         </>}
+        {page === 'ask' && <QueryResearch data={{
+          cases: data.query_cases, sources: data.sources, observations: data.observations,
+          knowledge_graph: data.knowledge_graph, as_of: data.as_of,
+        }}/>} 
         {page === 'timeline' && <Timeline data={data}/>}
         {page === 'relationships' && <Research graph={data.knowledge_graph} sources={data.sources}/>}
         {page === 'evidence' && <Evidence data={data} live={live} go={navigate}/>}

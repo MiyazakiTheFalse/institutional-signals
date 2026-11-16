@@ -26,4 +26,5 @@ jobs:
           node-version: '24'
       - run: npm ci --no-audit --no-fund
       - run: node --test desktop/test-validation.cjs desktop/test-provenance.cjs cloud/test-worker.mjs
+      - run: node --test tests/query-engine.test.mjs
       - run: npm run build

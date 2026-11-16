@@ -329,5 +329,50 @@
         "review_method": "source_register_publisher_attribution"
       }
     ]
-  }
+  },
+  "query_cases": [
+    {
+      "id": "uk-water-thames",
+      "title": "Thames Water and UK water-sector oversight",
+      "summary": "Curated public-source research on Thames Water financing, Ofwat regulation and parliamentary scrutiny. Does not establish wrongdoing or predictive performance.",
+      "domain": "public-regulation",
+      "geography": "United Kingdom",
+      "aliases": [
+        "thames water",
+        "ofwat",
+        "efra committee",
+        "uk water sector",
+        "water sector regulation"
+      ],
+      "topics": [
+        "financing",
+        "regulation",
+        "performance",
+        "parliamentary scrutiny",
+        "special administration",
+        "water sector"
+      ],
+      "source_ids": [
+        "PARL-2026-09",
+        "PARL-2026-11",
+        "PARL-2026-10",
+        "TW-2026-11-09",
+        "OFWAT-2026",
+        "GOV-JOINT-2026"
+      ],
+      "observation_ids": [
+        "OBS-001",
+        "OBS-002",
+        "OBS-003",
+        "OBS-004",
+        "OBS-005"
+      ],
+      "entity_ids": [
+        "thames-water",
+        "ofwat",
+        "efra-committee"
+      ],
+      "readiness": "research_only"
+    }
+  ]
 }

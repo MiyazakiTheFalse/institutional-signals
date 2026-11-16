@@ -10,6 +10,14 @@ The implementation includes cross-platform desktop packaging, provenance-aware i
 
 The **Build desktop installers** Actions workflow produces Windows x64, Intel/Apple Silicon macOS, and Linux x64 development packages. The **Validate cloud service** workflow verifies Worker bundling without deploying or granting access. Deployment requires a scoped Cloudflare deployment credential and individually provisioned invitation keys.
 
+## Question-driven research (experimental)
+
+The workstation now has an **Ask a question** view powered by an offline, case-registered retrieval engine. Enter a question and historical evidence cutoff to find relevant curated observations, publisher references and reviewed graph relationships. Unsupported domains return an explicit **uncovered** status and a research-brief template, not invented evidence.
+
+The query engine is reusable across cases: new jurisdictions or institutional sectors can register aliases, curated source IDs, observations and graph entities in `data/query_cases.json`, without changing retrieval code. A synthetic second domain is covered by regression tests; **only the UK water-sector case is included in the shipped research data**.
+
+This is keyword retrieval and provenance lookup, **not** general open-web question answering, automated source discovery, trained predictions, causality analysis or live institutional coverage. Forecasts remain gated, and no additional paid service is required. Read [the query-engine scope and extension contract](docs/QUERY_ENGINE_V04.md).
+
 ## Curated research foundation
 
 - Static React + TypeScript intelligence workstation showing curated source records, searchable event chronology, evidence requirements, inspectable institutional relationships and forecast-register status.
@@ -55,6 +63,7 @@ Cloudflare Pages settings: **root directory `/`**, build command `npm run build`
 - [`docs/RESEARCH_PROTOCOL.md`](docs/RESEARCH_PROTOCOL.md) - forecasting/scoring and evidence standards.
 - [`docs/BACKLOG.md`](docs/BACKLOG.md) - current delivery blockers and acceptance gates.
 - [`docs/UX_WORKSTATION_V03.md`](docs/UX_WORKSTATION_V03.md) - workstation navigation and accessibility acceptance checklist.
+- [`docs/QUERY_ENGINE_V04.md`](docs/QUERY_ENGINE_V04.md) - query-case registry, offline retrieval guarantees and the general-purpose research roadmap.
 - [`docs/SOURCE_ACCESS_STRATEGY.md`](docs/SOURCE_ACCESS_STRATEGY.md) - official fallback routes, Parliament PDF recovery and remaining Ofwat restrictions.
 - [`data/source_registry.json`](data/source_registry.json) - vetted source catalogue.
 - [`data/observations.json`](data/observations.json) - sourced initial events.
