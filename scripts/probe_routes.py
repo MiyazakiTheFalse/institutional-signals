@@ -20,6 +20,27 @@ TARGETS = (
 )
 
 
+def document_descriptor_hints(payload):
+    """Return only public structural fields needed to construct an official document route."""
+    hints = []
+    allow = {'id', 'documentid', 'documentpurpose', 'filedataformat', 'format',
+             'filename', 'name', 'url', 'downloadurl', 'purpose', 'type'}
+    def visit(value, path='', depth=0):
+        if depth > 7 or len(hints) >= 30:
+            return
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key.lower() in allow and isinstance(item, (str, int)):
+                    hints.append({'path': path + '/' + key, 'value': str(item)[:180]})
+                if isinstance(item, (dict, list)):
+                    visit(item, path + '/' + key, depth + 1)
+        elif isinstance(value, list):
+            for index, item in enumerate(value[:4]):
+                visit(item, path + '/' + str(index), depth + 1)
+    visit(payload)
+    return hints[:30]
+
+
 def probe(sources, transport):
     """One GET per route, with no repeated attempts after 403 or 429."""
     indexed = {s['source_id']: s for s in sources}
@@ -40,6 +61,8 @@ def probe(sources, transport):
             status, _, body = transport(source['url'], {})
             row.update(result='retrieved_unreviewed' if status == 200 else 'not_modified',
                        http_status=status, response_bytes=len(body))
+            if sid == 'PARL-REPORT-API' and status == 200:
+                row['document_descriptors'] = document_descriptor_hints(json.loads(body))
         except (OSError, ValueError) as exc:
             row.update(result='unavailable', failure_code=failure_code(exc))
             if isinstance(exc, HTTPError):
