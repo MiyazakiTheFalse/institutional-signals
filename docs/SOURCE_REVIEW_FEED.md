@@ -47,6 +47,8 @@ Its local `.collection/` directory is deliberately gitignored. It may encounter 
 
 To see live workspace results, the owner must configure and activate the private R2 bucket, secrets and Worker; collection is not activated merely by installing the desktop app.
 
+Automatic collector pushes are scoped to the reviewed `main` branch. Feature-branch work can still run isolated local tests, but must not overwrite the shared production R2 checkpoint. The scheduled run remains subject to source availability and explicitly enabled credentials.
+
 ## Remaining work
 
 - Convert candidate document snapshots into structured *candidate claims* with original document/page pointers, without automatic promotion.
