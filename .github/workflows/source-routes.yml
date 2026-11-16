@@ -2,7 +2,7 @@ name: Verify official source alternatives
 on:
   workflow_dispatch:
   push:
-    branches: [main, feat/official-source-routes-access-health]
+    branches: [main]
     paths:
       - scripts/probe_routes.py
       - scripts/collect.py
