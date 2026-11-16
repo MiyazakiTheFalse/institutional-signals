@@ -5,6 +5,7 @@ on:
     branches: [main, feat/official-source-routes-access-health]
     paths:
       - scripts/probe_routes.py
+      - scripts/collect.py
       - config/collection.json
       - .github/workflows/source-routes.yml
 permissions:
