@@ -1,6 +1,8 @@
 # Institutional knowledge graph and decision intelligence — v0.1
 
-**Status:** Proposed implementation contract, not yet a deployed graph or trained forecasting model.
+**Status:** Initial source-publication graph and temporal replay UI implemented; authority/influence edges, live extraction, and trained graph forecasting are **not** implemented.
+
+**First concrete slice (16 November 2026):** Four `issued` relationships connect Thames Water, Ofwat and the House of Commons EFRA Committee to documents listed in the curated source registry. These links establish only publisher attribution. Because source dates are recorded to the day rather than the second, the final second of the relevant UTC date is used conservatively when constructing availability timestamps. The edges were newly recorded/reviewed on 16 November; they cannot be used to simulate knowing these curated relationships before that review time. The public desktop Research panel presents these first edges with provenance and limitations. No legal power, private knowledge, approval right or improper influence is inferred.
 
 ## Design principle
 
