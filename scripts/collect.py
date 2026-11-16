@@ -163,11 +163,26 @@ class SourceTransport:
 
     def __call__(self, url, headers):
         source = self.sources[url]
-        if source.get('adapter') != 'parliament_api':
+        adapter = source.get('adapter', 'public_document')
+        if adapter == 'public_document':
             return self.polite(url, headers)
         parsed = urlsplit(url)
-        if parsed.netloc != 'committees-api.parliament.uk' or not re.fullmatch(
-                r'/api/Publications(?:/[0-9]+(?:/Standard/OriginalFormat)?)?', parsed.path):
+        if parsed.scheme != 'https' or parsed.netloc != 'committees-api.parliament.uk':
+            raise ValueError('Not an allowlisted Parliament API host')
+        if adapter == 'parliament_document':
+            # Public documented document operation, not an attempt to evade a blocked page.
+            expected_id = source['expected_publication_id']
+            if parsed.path != f'/api/Publications/{expected_id}/Standard/OriginalFormat' or parsed.query:
+                raise ValueError('Not an allowlisted Parliament document operation')
+            result = fetch(url, {'Accept': 'application/pdf', **headers})
+            if result[0] == 200:
+                mime = next((v for k, v in result[1].items()
+                             if k.lower() == 'content-type'), '').lower().split(';')[0].strip()
+                if not result[2].startswith(b'%PDF-') or mime not in ('', 'application/pdf', 'application/octet-stream'):
+                    raise ValueError('Parliament document response is not a PDF; possible HTML challenge')
+            return result
+        if adapter != 'parliament_api' or not re.fullmatch(
+                r'/api/Publications(?:/[0-9]+)?', parsed.path):
             raise ValueError('Not an allowlisted Parliament API operation')
         result = fetch(url, {'Accept': 'application/json', **headers})
         if result[0] == 200:
@@ -277,6 +292,9 @@ def collect(sources, store, transport, now=None):
         except (OSError, ValueError) as exc:
             failures = old.get('consecutive_failures', 0) + 1
             delay = min(1440, source['poll_target_minutes'] * 2 ** min(failures - 1, 5))
+            if isinstance(exc, HTTPError) and exc.code in (401, 403):
+                # An access denial is not a transient error: stop repeated pressure.
+                delay = max(delay, 1440)
             if isinstance(exc, HTTPError) and exc.code == 429:
                 from email.utils import parsedate_to_datetime
                 retry = exc.headers.get('Retry-After', '')
@@ -303,7 +321,11 @@ def collect(sources, store, transport, now=None):
               'recent_changes': recent_review_candidates(events, last_report),
               'recent_changes_limit': MAX_RECENT_CHANGES,
               'sources': state, 'health': health,
-              'coverage': required_source_coverage(h['status'] for h in health.values()),
+              'coverage': required_source_coverage(health[source['source_id']]['status']
+                                                   for source in sources if source.get('required_for_health', True)),
+              'supplemental_coverage': required_source_coverage(
+                  health[source['source_id']]['status']
+                  for source in sources if not source.get('required_for_health', True)),
               'notice': 'HTTP checks and unreviewed content changes; not verified events or forecasts. Recent changes are a bounded index; immutable runs preserve full history.'}
     # Commit durable run before checkpoint. A failed upload leaves retryable content-addressed blobs.
     run_key = f'runs/{now:%Y/%m/%d}/{now:%H%M%S}-{uuid.uuid4().hex}.json.gz'
@@ -324,11 +346,27 @@ def load_sources(path):
             raise ValueError('Polling target must be at least 30 minutes')
         if urlsplit(row['url']).scheme != 'https' or not urlsplit(row['url']).hostname:
             raise ValueError('Invalid source URL')
-        if row.get('adapter', 'public_document') not in ('public_document', 'parliament_api'):
+        adapter = row.get('adapter', 'public_document')
+        if adapter not in ('public_document', 'parliament_api', 'parliament_document'):
             raise ValueError('Unknown source adapter')
+        if not isinstance(row.get('required_for_health', True), bool):
+            raise ValueError('required_for_health must be a boolean')
+        if adapter == 'parliament_document':
+            if row.get('response_kind') != 'pdf' or not isinstance(row.get('expected_publication_id'), int) or row['expected_publication_id'] <= 0:
+                raise ValueError('Parliament documents must have an explicit expected ID and PDF format')
+        if adapter == 'parliament_api' and row.get('response_kind') not in (None, 'publication_list'):
+            raise ValueError('Invalid Parliament API response kind')
+        if row.get('supports_sources') is not None:
+            if not isinstance(row['supports_sources'], list) or any(not isinstance(s, str) for s in row['supports_sources']):
+                raise ValueError('Invalid source relationship')
+            if not isinstance(row.get('coverage_scope'), str) or not row['coverage_scope'].strip():
+                raise ValueError('Supplemental routes require explicit coverage scope')
         seen.add(sid)
     if not sources:
         raise ValueError('No sources configured')
+    for row in sources:
+        if any(sid not in seen or sid == row['source_id'] for sid in row.get('supports_sources', [])):
+            raise ValueError('Supplemental routes must reference other known source IDs')
     return sources
 
 
