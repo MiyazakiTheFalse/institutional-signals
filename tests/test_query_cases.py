@@ -41,7 +41,7 @@ class QueryCaseValidationTests(unittest.TestCase):
         }
         data = self.export_with(self.cases + [extra])
         self.assertEqual(len(data['query_cases']), 2)
-        self.assertFalse(data['query_cases'][1]['source_ids'])
+        self.assertFalse(next(c for c in data['query_cases'] if c['id'] == 'synthetic-metro')['source_ids'])
 
     def test_rejects_cross_case_source_reference(self):
         candidate = copy.deepcopy(self.cases)
