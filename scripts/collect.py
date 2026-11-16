@@ -184,7 +184,10 @@ class SourceTransport:
                 mime = next((v for k, v in result[1].items()
                              if k.lower() == 'content-type'), '').lower().split(';')[0].strip()
                 if not result[2].startswith(b'%PDF-') or mime not in ('', 'application/pdf', 'application/octet-stream'):
-                    raise ValueError('Parliament document response is not a PDF; possible HTML challenge')
+                    # Only bounded format metadata, never document bytes or upstream tokens.
+                    safe_mime = re.sub(r'[^a-z0-9/.-]', '', mime)[:64]
+                    signature = result[2][:12].hex()
+                    raise ValueError(f'Parliament document response is not a PDF (mime={safe_mime}, prefix_hex={signature})')
             return result
         if adapter != 'parliament_api' or not re.fullmatch(
                 r'/api/Publications(?:/[0-9]+)?', parsed.path):
