@@ -2,8 +2,12 @@ name: Verify official source alternatives
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - scripts/probe_routes.py
+      - scripts/collect.py
+      - config/collection.json
+      - .github/workflows/source-routes.yml
 permissions:
   contents: read
 jobs:

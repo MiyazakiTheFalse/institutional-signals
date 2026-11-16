@@ -1,3 +1,4 @@
+import base64
 import gzip
 import json
 import sys
@@ -9,7 +10,7 @@ from urllib.error import HTTPError
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
-from collect import collect, LocalStore, packed, PoliteFetch, SourceTransport
+from collect import collect, LocalStore, packed, PoliteFetch, SourceTransport, load_sources
 
 
 class CollectionTests(unittest.TestCase):
@@ -159,6 +160,141 @@ class CollectionTests(unittest.TestCase):
         with patch('collect.fetch', return_value=(200, {}, b'{"id":123}')):
             with self.assertRaisesRegex(ValueError, 'Wrong publication'):
                 transport(url, {})
+
+    def test_parliament_document_returns_only_verified_format_bytes(self):
+        url = 'https://committees-api.parliament.uk/api/Publications/55076/Document/305807/OriginalFormat'
+        source = {'url': url, 'adapter': 'parliament_document',
+                  'expected_publication_id': 55076, 'expected_document_id': 305807,
+                  'response_kind': 'pdf'}
+        transport = SourceTransport([source])
+        with patch('collect.fetch', return_value=(200, {'Content-Type': 'application/pdf'}, b'%PDF-1.7\\ncontent')) as fetch_mock:
+            code, _, body = transport(url, {})
+            self.assertEqual(code, 200)
+            self.assertTrue(body.startswith(b'%PDF-'))
+            self.assertEqual(fetch_mock.call_args.args[1]['Accept'], 'application/pdf')
+        with patch('collect.fetch', return_value=(200, {'Content-Type': 'text/html'}, b'<html>please sign in</html>')):
+            with self.assertRaisesRegex(ValueError, 'not a PDF'):
+                transport(url, {})
+        with patch('collect.fetch', return_value=(200, {'Content-Type': 'text/html'}, b'%PDF-challenge')):
+            with self.assertRaisesRegex(ValueError, 'not a PDF'):
+                transport(url, {})
+        with patch('collect.fetch', return_value=(304, {}, b'')):
+            self.assertEqual(transport(url, {})[0], 304)
+
+    def test_parliament_document_blocks_unapproved_hosts_and_operations(self):
+        for url in (
+            'https://example.org/api/Publications/55076/Document/305807/OriginalFormat',
+            'https://committees-api.parliament.uk/api/Publications/55077/Document/305807/OriginalFormat',
+            'https://committees-api.parliament.uk/api/Publications/55076/Document/999999/OriginalFormat',
+            'https://committees-api.parliament.uk/api/Publications/55076/Document/305807/OriginalFormat?extra=1',
+        ):
+            with self.subTest(url=url), patch('collect.fetch') as request:
+                transport = SourceTransport([{'url': url, 'adapter': 'parliament_document',
+                                              'expected_publication_id': 55076, 'expected_document_id': 305807,
+                                              'response_kind': 'pdf'}])
+                with self.assertRaisesRegex(ValueError, 'allowlisted'):
+                    transport(url, {})
+                request.assert_not_called()
+
+    def test_parliament_json_enveloped_pdf_decodes_to_verified_bytes(self):
+        url = 'https://committees-api.parliament.uk/api/Publications/55076/Document/305807/OriginalFormat'
+        source = {'url': url, 'adapter': 'parliament_document',
+                  'expected_publication_id': 55076, 'expected_document_id': 305807,
+                  'response_kind': 'pdf'}
+        transport = SourceTransport([source])
+        pdf = b'%PDF-1.7\\nExample official report\\n%%EOF'
+        wrapped = json.dumps({'data': base64.b64encode(pdf).decode('ascii')}).encode()
+        with patch('collect.fetch', return_value=(200, {'Content-Type': 'application/json'}, wrapped)):
+            status, headers, body = transport(url, {})
+            self.assertEqual(status, 200)
+            self.assertEqual(body, pdf)
+            self.assertEqual(headers['Content-Type'], 'application/pdf')
+        for invalid in (
+            b'{"data":"invalid-base64?!"}',
+            b'{"data":"PGh0bWw+PHNlY3JldD48L2h0bWw+"}',
+            b'{"unrelated":"metadata"}',
+        ):
+            with self.subTest(value=invalid[:30]), patch('collect.fetch', return_value=(200, {'content-type': 'application/json'}, invalid)):
+                with self.assertRaises(ValueError):
+                    transport(url, {})
+
+    def test_collector_archives_decoded_parliament_pdf_not_base64_wrapper(self):
+        url = 'https://committees-api.parliament.uk/api/Publications/55076/Document/305807/OriginalFormat'
+        source = {'source_id': 'report-pdf', 'url': url, 'adapter': 'parliament_document',
+                  'expected_publication_id': 55076, 'expected_document_id': 305807,
+                  'response_kind': 'pdf', 'poll_target_minutes': 1440, 'required_for_health': False}
+        pdf = b'%PDF-1.7\\nReview required\\n%%EOF'
+        wrapped = json.dumps({'data': base64.b64encode(pdf).decode()}).encode()
+        with patch('collect.fetch', return_value=(200, {'Content-Type': 'application/json'}, wrapped)):
+            result = collect([source], self.store, SourceTransport([source]), self.now)
+        event = result['events'][0]
+        self.assertEqual(gzip.decompress(self.store.get(event['raw_key'])), pdf)
+        self.assertEqual(event['content_type'], 'application/pdf')
+        self.assertEqual(event['review_state'], 'unreviewed_content_change')
+        self.assertFalse(result['coverage']['safe_to_claim_current'])
+        self.assertTrue(result['supplemental_coverage']['safe_to_claim_current'])
+
+    def test_parliament_format_based_pdf_route_is_strict(self):
+        url = 'https://committees-api.parliament.uk/api/Publications/55076/Standard/pdf'
+        source = {'url': url, 'adapter': 'parliament_document',
+                  'expected_publication_id': 55076, 'response_kind': 'pdf'}
+        transport = SourceTransport([source])
+        with patch('collect.fetch', return_value=(200, {'Content-Type': 'application/pdf'}, b'%PDF-1.7\\nreport')):
+            self.assertEqual(transport(url, {})[0], 200)
+        wrong = 'https://committees-api.parliament.uk/api/Publications/55076/Standard/OriginalFormat'
+        with patch('collect.fetch') as requested:
+            with self.assertRaisesRegex(ValueError, 'allowlisted'):
+                SourceTransport([{**source, 'url': wrong}])(wrong, {})
+            requested.assert_not_called()
+
+    def test_access_denials_wait_one_day_before_retrying(self):
+        attempts = []
+        def forbidden(url, headers):
+            attempts.append(url)
+            raise HTTPError(url, 403, 'forbidden', {}, None)
+        first = self.run_collect(forbidden)
+        self.assertEqual(first['sources']['official']['last_error_code'], 'http_403')
+        self.assertEqual(datetime.fromisoformat(first['sources']['official']['next_attempt_at']), self.now + timedelta(days=1))
+        self.run_collect(forbidden, 60)
+        self.assertEqual(len(attempts), 1)
+
+    def test_optional_official_routes_do_not_mask_original_failure(self):
+        sources = self.sources + [{
+            'source_id': 'official-pdf', 'url': 'https://example.org/report.pdf',
+            'required_for_health': False, 'poll_target_minutes': 1440,
+            'coverage_scope': 'original_document_candidate', 'supports_sources': ['official']
+        }]
+        def retrieve(url, headers):
+            if url.endswith('/news'):
+                raise HTTPError(url, 403, 'forbidden', {}, None)
+            return 200, {'Content-Type': 'application/pdf'}, b'%PDF-1.7\\ntest'
+        report = collect(sources, self.store, retrieve, self.now)
+        self.assertFalse(report['coverage']['safe_to_claim_current'])
+        self.assertTrue(report['supplemental_coverage']['safe_to_claim_current'])
+        self.assertEqual(report['sources']['official']['last_error_code'], 'http_403')
+        self.assertEqual(report['events'][0]['coverage_scope'], 'original_document_candidate')
+
+    def test_registry_validates_document_routes_and_scope(self):
+        real = Path(__file__).resolve().parents[1] / 'config' / 'collection.json'
+        configured = load_sources(real)
+        self.assertIn('PARL-REPORT-PDF-API', [s['source_id'] for s in configured])
+        with tempfile.TemporaryDirectory() as directory:
+            tmp = Path(directory) / 'collection.json'
+            bad = [{
+                'source_id': 'fake', 'url': 'https://example.org/fake',
+                'poll_target_minutes': 60, 'adapter': 'parliament_document'
+            }]
+            tmp.write_text(json.dumps(bad))
+            with self.assertRaisesRegex(ValueError, 'PDF format'):
+                load_sources(tmp)
+            bad[0].update(adapter='public_document', supports_sources=['not-configured'])
+            tmp.write_text(json.dumps(bad))
+            with self.assertRaisesRegex(ValueError, 'coverage scope'):
+                load_sources(tmp)
+            bad[0]['coverage_scope'] = 'metadata_only'
+            tmp.write_text(json.dumps(bad))
+            with self.assertRaisesRegex(ValueError, 'known source IDs'):
+                load_sources(tmp)
 
     def test_api_route_does_not_allow_arbitrary_hosts(self):
         url = 'https://example.org/api/Publications/55076'

@@ -155,7 +155,9 @@
       "why": "Required before this case can issue or update a forecast.",
       "capability": "parliament_report_body",
       "source_ids": [
-        "PARL-2026-09"
+        "PARL-2026-09",
+        "PARL-REPORT-PDF-API",
+        "PARL-REPORT-PDF-FORMAT"
       ],
       "accepted_formats": [
         "pdf"

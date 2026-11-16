@@ -3,11 +3,94 @@
     "case_id": "thames-water-restructuring",
     "label": "Thames Water / Ofwat",
     "requirements": [
-      {"id":"company-financing","label":"Reviewed company financing announcement","capability":"financing_announcement","routes":[{"source_id":"TW-2026-11-09"}]},
-      {"id":"parliament-report","label":"Full parliamentary report content","capability":"parliament_report_body","routes":[{"source_id":"PARL-2026-09"}]},
-      {"id":"regulator-performance","label":"Comparable Ofwat performance data","capability":"ofwat_performance_dataset","routes":[{"source_id":"OFWAT-2026"}]},
-      {"id":"joint-regulator-context","label":"Joint regulator report content","capability":"joint_regulator_report_body","routes":[{"source_id":"GOV-JOINT-2026"},{"source_id":"GOV-JOINT-PDF"}]},
-      {"id":"publication-discovery","label":"Publication discovery metadata","essential":false,"capability":"publication_metadata","routes":[{"source_id":"PARL-REPORT-API"},{"source_id":"PARL-PUBLICATIONS-API"}]}
+      {
+        "id": "company-financing",
+        "label": "Reviewed company financing announcement",
+        "capability": "financing_announcement",
+        "routes": [
+          {
+            "source_id": "TW-2026-11-09"
+          }
+        ]
+      },
+      {
+        "id": "parliament-report",
+        "label": "Full parliamentary report content",
+        "capability": "parliament_report_body",
+        "routes": [
+          {
+            "source_id": "PARL-2026-09"
+          },
+          {
+            "source_id": "PARL-REPORT-PDF-API"
+          },
+          {
+            "source_id": "PARL-REPORT-PDF-FORMAT"
+          }
+        ]
+      },
+      {
+        "id": "regulator-performance",
+        "label": "Comparable Ofwat performance data",
+        "capability": "ofwat_performance_dataset",
+        "routes": [
+          {
+            "source_id": "OFWAT-2026"
+          }
+        ]
+      },
+      {
+        "id": "joint-regulator-context",
+        "label": "Joint regulator report content",
+        "capability": "joint_regulator_report_body",
+        "routes": [
+          {
+            "source_id": "GOV-JOINT-2026"
+          },
+          {
+            "source_id": "GOV-JOINT-PDF"
+          }
+        ]
+      },
+      {
+        "id": "publication-discovery",
+        "label": "Publication discovery metadata",
+        "essential": false,
+        "capability": "publication_metadata",
+        "routes": [
+          {
+            "source_id": "PARL-REPORT-API"
+          },
+          {
+            "source_id": "PARL-PUBLICATIONS-API"
+          }
+        ]
+      },
+      {
+        "id": "ofwat-open-data-discovery",
+        "label": "Ofwat dataset and dictionary publication discovery (not the downloaded dataset)",
+        "essential": false,
+        "capability": "ofwat_data_publication_metadata",
+        "routes": [
+          {
+            "source_id": "OFWAT-DATA-PUBLICATION"
+          },
+          {
+            "source_id": "OFWAT-DATA-DICTIONARY"
+          }
+        ]
+      },
+      {
+        "id": "efra-reports-discovery",
+        "label": "Parliament EFRA publications index (not the original news release)",
+        "essential": false,
+        "capability": "efra_publication_index_metadata",
+        "routes": [
+          {
+            "source_id": "PARL-EFRA-PUBLICATIONS"
+          }
+        ]
+      }
     ]
   }
 ]
