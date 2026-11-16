@@ -4,7 +4,9 @@
 **Date:** 15 November 2026  
 **Project owner:** Repository owner  
 **Initial case:** Thames Water / Ofwat / UK water-sector regulation  
-**Status:** Proposed architecture + runnable starter, not a production intelligence service
+**Status:** Original v0.1 design baseline, retained for research rationale; implementation has advanced to the UX v0.3 preview but is **not** a production intelligence service.
+
+**Implementation note (16 November 2026):** The current application has six task-focused views, an interactive graph with four curated publisher-attribution edges, recovered Parliament document retrieval, an evidence change feed and experimental forecast gates. This original design's references to a minimal static dashboard describe the starting architecture, not current release status. Consult [Product acceptance](PRODUCT_ACCEPTANCE.md), [UX v0.3](UX_WORKSTATION_V03.md) and [Delivery backlog](BACKLOG.md) for current implementation and unverified production blockers.
 
 ## 1. Executive summary
 

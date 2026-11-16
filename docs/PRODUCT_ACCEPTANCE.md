@@ -1,19 +1,28 @@
-# Product acceptance — 15 November 2026
+# Product acceptance — updated 16 November 2026
 
 The authoritative scope is DESIGN.md plus ML_AND_FRESHNESS_ARCHITECTURE.md and the requested desktop, upload and live-storage extensions. This checklist records implementation separately from deployment. A passing build is not a production release.
 
 ## Implemented
 
-- Native Windows, macOS and Linux packaging; sandboxed local renderer, bundled source catalogue, timeline and forecast register.
+- Native Windows, macOS and Linux **development** packaging with sandboxed local renderer. UX v0.3 now has task-based Overview, Timeline, Relationships, Evidence, Forecasts and Workspace views. The timeline and source registry have search, with a selectable temporal institutional network; mobile, accessibility and device acceptance remain to be performed.
 - Required-evidence cards, publisher URL and publication-date validation, bounded PDF/CSV import, SHA-256 content identity, compressed local quarantine and explicit submission queue.
 - Desktop workspace connection using individual invitation keys; operating-system encrypted storage when available, memory-only fallback, disconnect and retry.
 - Cloudflare Worker API with private R2 binding, per-user isolation, server-side upload validation, rate limiting, idempotent submission IDs and immutable quarantine records.
 - Cloud heartbeat/source status, a scheduled watchdog, and immutable reviewer rejection/change-request records. No endpoint exposes unscanned document bytes.
-- Collector, evidence dependency gate, missing-evidence request generation and tests against unavailable/future/unverified evidence.
-- Temporal institutional graph validation/replay, source independence and correction lineage, descriptive graph features and affected-decision traversal. UI provides institution selection, as-of date, provenance inspection and a factual briefing scaffold. The graph intentionally has no invented relationships.
+- Collector, evidence dependency gate, missing-evidence request generation and tests against unavailable/future/unverified evidence. Official Parliament API access now retrieves the same original-format document through two endpoints, both hashed identically; the contents remain an **unreviewed** candidate until independent content review. Blocked Ofwat dataset access is still unresolved.
+- Temporal institutional graph validation/replay, source independence, correction lineage, descriptive graph features and affected-decision traversal. The bundled graph currently holds **7 nodes and 4 reviewed publication-attribution edges**. The interactive UI has entity selection, search, an as-of UTC date, connections and source-level provenance. These edges do **not** establish legal decision authority, influence, intent or wrongdoing.
 - Experimental baseline forecast generation with independent resolved-outcome minimum, no-future-information checks, immutable content-addressed snapshots, Brier/log-loss comparison and a conservative candidate screening gate. These are tested components, not a trained production model or automatically published forecast.
 - Operator ClamAV scan command/workflow and human verification command. Exact hashes and recent signatures are required; scanner errors fail closed. Verified manual evidence can fill unavailable collection routes for a bounded freshness interval, then expires back to hold.
 - Scheduled research orchestration consumes explicitly registered targets, matching outcome families and reviewed evidence, then stores immutable eligible baseline snapshots. Target/outcome registers are initially empty; no probability is invented to populate the dashboard.
+
+## UX v0.3 acceptance still required
+
+- Formal keyboard-only, screen reader, 320 px mobile viewport and 200% zoom testing. The code includes a skip link, focus transfer, live page-change announcements and a keyboard entity selector, but those are **not** substitutes for observed testing.
+- Test the new six-view interface on packaged Windows, macOS Intel/Apple Silicon, and Linux builds; the latest UX is merged in source but not yet present in an independently tested native release.
+- User-research task test: locate the most recent observed event, inspect its primary source, find the latest graph relationship and evidence date, identify missing evidence and explain why no forecast is yet available.
+- Confirm that switching between the static public dataset and authenticated workspace health does not suggest that old research is real-time verified.
+
+See [UX_WORKSTATION_V03.md](UX_WORKSTATION_V03.md).
 
 ## Release blockers (must not be represented as completed)
 
