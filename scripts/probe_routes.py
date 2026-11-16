@@ -5,6 +5,7 @@ collector. Results are observations of HTTP retrieval, NEVER evidence approval.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from urllib.error import HTTPError
@@ -62,6 +63,8 @@ def probe(sources, transport):
             status, _, body = transport(source['url'], {})
             row.update(result='retrieved_unreviewed' if status == 200 else 'not_modified',
                        http_status=status, response_bytes=len(body))
+            if status == 200:
+                row['sha256'] = hashlib.sha256(body).hexdigest()
             if sid == 'PARL-REPORT-API' and status == 200:
                 row['document_descriptors'] = document_descriptor_hints(json.loads(body))
         except (OSError, ValueError) as exc:
