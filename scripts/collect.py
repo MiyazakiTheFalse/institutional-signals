@@ -172,7 +172,12 @@ class SourceTransport:
         if adapter == 'parliament_document':
             # Public documented document operation, not an attempt to evade a blocked page.
             expected_id = source['expected_publication_id']
-            if parsed.path != f'/api/Publications/{expected_id}/Standard/OriginalFormat' or parsed.query:
+            document_id = source.get('expected_document_id')
+            if document_id is not None:
+                expected_path = f'/api/Publications/{expected_id}/Document/{document_id}/OriginalFormat'
+            else:
+                expected_path = f'/api/Publications/{expected_id}/Standard/pdf'
+            if parsed.path != expected_path or parsed.query:
                 raise ValueError('Not an allowlisted Parliament document operation')
             result = fetch(url, {'Accept': 'application/pdf', **headers})
             if result[0] == 200:
@@ -354,6 +359,9 @@ def load_sources(path):
         if adapter == 'parliament_document':
             if row.get('response_kind') != 'pdf' or not isinstance(row.get('expected_publication_id'), int) or row['expected_publication_id'] <= 0:
                 raise ValueError('Parliament documents must have an explicit expected ID and PDF format')
+            document_id = row.get('expected_document_id')
+            if document_id is not None and (not isinstance(document_id, int) or document_id <= 0):
+                raise ValueError('Invalid expected Parliament document ID')
         if adapter == 'parliament_api' and row.get('response_kind') not in (None, 'publication_list'):
             raise ValueError('Invalid Parliament API response kind')
         if row.get('supports_sources') is not None:
