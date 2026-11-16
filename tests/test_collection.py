@@ -218,6 +218,22 @@ class CollectionTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     transport(url, {})
 
+    def test_collector_archives_decoded_parliament_pdf_not_base64_wrapper(self):
+        url = 'https://committees-api.parliament.uk/api/Publications/55076/Document/305807/OriginalFormat'
+        source = {'source_id': 'report-pdf', 'url': url, 'adapter': 'parliament_document',
+                  'expected_publication_id': 55076, 'expected_document_id': 305807,
+                  'response_kind': 'pdf', 'poll_target_minutes': 1440, 'required_for_health': False}
+        pdf = b'%PDF-1.7\\nReview required\\n%%EOF'
+        wrapped = json.dumps({'data': base64.b64encode(pdf).decode()}).encode()
+        with patch('collect.fetch', return_value=(200, {'Content-Type': 'application/json'}, wrapped)):
+            result = collect([source], self.store, SourceTransport([source]), self.now)
+        event = result['events'][0]
+        self.assertEqual(gzip.decompress(self.store.get(event['raw_key'])), pdf)
+        self.assertEqual(event['content_type'], 'application/pdf')
+        self.assertEqual(event['review_state'], 'unreviewed_content_change')
+        self.assertFalse(result['coverage']['safe_to_claim_current'])
+        self.assertTrue(result['supplemental_coverage']['safe_to_claim_current'])
+
     def test_parliament_format_based_pdf_route_is_strict(self):
         url = 'https://committees-api.parliament.uk/api/Publications/55076/Standard/pdf'
         source = {'url': url, 'adapter': 'parliament_document',
