@@ -70,3 +70,33 @@ test('old collection heartbeat is visibly stale', async () => {
   const result = await (await worker.fetch(request('/v1/status'), env)).json()
   assert.equal(result.stale, true)
 })
+
+test('workspace exposes only reviewed-safe collection diagnostics and unreviewed changes', async () => {
+  const env = await setup()
+  const observed_at = new Date().toISOString()
+  const hash = 'a'.repeat(64)
+  await env.EVIDENCE.put('status/latest.json.gz', gzipSync(JSON.stringify({
+    checked_at: observed_at,
+    coverage: { fraction_current: 0.5, safe_to_claim_current: false },
+    sources: { official: { last_attempt_at: observed_at, last_success_at: null, consecutive_failures: 2, last_error_code: 'http_403', last_error: 'private upstream diagnostic' } },
+    recent_changes_limit: 100,
+    recent_changes: [
+      { source_id: 'official', observed_at, sha256: hash, previous_sha256: null, coverage_scope: 'original_document', review_state: 'unreviewed_content_change', raw_key: 'raw/not-public', body: 'secret payload' },
+      { source_id: 'official', observed_at, sha256: 'bad', review_state: 'unreviewed_content_change' }
+    ]
+  })))
+  await env.EVIDENCE.put('status/case-readiness.json.gz', gzipSync('{}'))
+  const response = await worker.fetch(request('/v1/status'), env)
+  assert.equal(response.status, 200)
+  const raw = await response.text()
+  const result = JSON.parse(raw)
+  assert.equal(result.sources[0].last_error_code, 'http_403')
+  assert.equal(result.coverage.safe_to_claim_current, false)
+  assert.equal(result.recent_changes.length, 1)
+  assert.equal(result.recent_changes[0].sha256, hash)
+  assert.equal(result.recent_changes[0].review_state, 'unreviewed_content_change')
+  assert.equal(result.recent_changes_limited, true)
+  assert.ok(!raw.includes('private upstream diagnostic'))
+  assert.ok(!raw.includes('raw/not-public'))
+  assert.ok(!raw.includes('secret payload'))
+})

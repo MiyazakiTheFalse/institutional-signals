@@ -183,6 +183,45 @@ class SourceTransport:
         return result
 
 
+MAX_RECENT_CHANGES = 100
+
+
+def failure_code(error):
+    """Public diagnostic category; never expose raw transport errors or credentials."""
+    if isinstance(error, HTTPError):
+        return f'http_{error.code}' if 400 <= error.code < 600 else 'network_error'
+    if isinstance(error, ValueError):
+        if 'robots policy disallows' in str(error):
+            return 'robots_disallowed'
+        return 'validation_error'
+    return 'network_error'
+
+
+def recent_review_candidates(events, previous):
+    """Bounded convenience feed; the immutable runs archive is authoritative."""
+    rows = []
+    seen = set()
+    for event in [
+        *reversed(events),
+        *previous.get('recent_changes', []),
+    ]:
+        key = (event.get('source_id'), event.get('sha256'), event.get('previous_sha256'))
+        if key in seen:
+            continue
+        seen.add(key)
+        rows.append({
+            'source_id': event['source_id'],
+            'observed_at': event['observed_at'],
+            'sha256': event['sha256'],
+            'previous_sha256': event.get('previous_sha256'),
+            'coverage_scope': event.get('coverage_scope', 'original_document'),
+            'review_state': 'unreviewed_content_change',
+        })
+        if len(rows) >= MAX_RECENT_CHANGES:
+            break
+    return rows
+
+
 def collect(sources, store, transport, now=None):
     now = now or datetime.now(timezone.utc)
     if now.utcoffset() != timedelta(0):
@@ -190,6 +229,8 @@ def collect(sources, store, transport, now=None):
     stamp = now.isoformat().replace('+00:00', 'Z')
     previous = store.get('state/latest.json.gz')
     state = json.loads(gzip.decompress(previous)) if previous else {}
+    previous_status = store.get('status/latest.json.gz')
+    last_report = json.loads(gzip.decompress(previous_status)) if previous_status else {}
     events = []
     for source in sources:
         sid = source['source_id']
@@ -231,6 +272,7 @@ def collect(sources, store, transport, now=None):
             else:
                 raise ValueError(f'Unexpected HTTP status {status}')
             entry.update(last_success_at=stamp, consecutive_failures=0, last_error=None,
+                         last_error_code=None,
                          next_attempt_at=(now + timedelta(minutes=source['poll_target_minutes'])).isoformat())
         except (OSError, ValueError) as exc:
             failures = old.get('consecutive_failures', 0) + 1
@@ -247,6 +289,7 @@ def collect(sources, store, transport, now=None):
                         pass
             entry.update(consecutive_failures=failures,
                          last_error=f'{type(exc).__name__}: {exc}',
+                         last_error_code=failure_code(exc),
                          next_attempt_at=(now + timedelta(minutes=delay)).isoformat())
         state[sid] = entry
     health = {}
@@ -256,9 +299,12 @@ def collect(sources, store, transport, now=None):
             checked_at=datetime.fromisoformat(entry['last_success_at']) if entry.get('last_success_at') else None,
             now=now, target_minutes=source['poll_target_minutes'],
             consecutive_failures=entry.get('consecutive_failures', 0))
-    report = {'checked_at': stamp, 'events': events, 'sources': state, 'health': health,
+    report = {'checked_at': stamp, 'events': events,
+              'recent_changes': recent_review_candidates(events, last_report),
+              'recent_changes_limit': MAX_RECENT_CHANGES,
+              'sources': state, 'health': health,
               'coverage': required_source_coverage(h['status'] for h in health.values()),
-              'notice': 'HTTP checks and unreviewed content changes; not verified events or forecasts.'}
+              'notice': 'HTTP checks and unreviewed content changes; not verified events or forecasts. Recent changes are a bounded index; immutable runs preserve full history.'}
     # Commit durable run before checkpoint. A failed upload leaves retryable content-addressed blobs.
     run_key = f'runs/{now:%Y/%m/%d}/{now:%H%M%S}-{uuid.uuid4().hex}.json.gz'
     store.put(run_key, packed(report), immutable=True)

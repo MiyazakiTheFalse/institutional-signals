@@ -120,6 +120,36 @@ class CollectionTests(unittest.TestCase):
                 PoliteFetch()('https://example.org/news', {})
             self.assertEqual(get.call_count, 1)
 
+    def test_unreviewed_change_index_survives_noop_and_failures(self):
+        first = self.initial()['recent_changes']
+        self.assertEqual(len(first), 1)
+        self.assertEqual(first[0]['review_state'], 'unreviewed_content_change')
+        self.assertNotIn('raw_key', first[0])
+        later = self.run_collect(lambda u, h: (304, {}, b''), 30)
+        self.assertEqual(later['recent_changes'], first)
+
+        def denied(u, h):
+            raise HTTPError(u, 403, 'blocked', {}, None)
+        blocked = self.run_collect(denied, 60)
+        self.assertEqual(blocked['sources']['official']['last_error_code'], 'http_403')
+        self.assertEqual(blocked['recent_changes'], first)
+        self.assertFalse(blocked['coverage']['safe_to_claim_current'])
+
+    def test_corrections_are_review_candidates_not_automatic_facts(self):
+        initial = self.initial()['recent_changes']
+        later = self.run_collect(lambda u, h: (200, {}, b'new document'), 30)
+        self.assertEqual(len(later['recent_changes']), 2)
+        self.assertEqual(later['recent_changes'][0]['previous_sha256'], initial[0]['sha256'])
+        self.assertEqual(later['recent_changes'][1], initial[0])
+        self.assertTrue(all(e['review_state'] == 'unreviewed_content_change' for e in later['recent_changes']))
+        unchanged = self.run_collect(lambda u, h: (304, {}, b''), 60)
+        self.assertEqual(unchanged['recent_changes'], later['recent_changes'])
+
+    def test_failure_codes_are_safe_and_clear_after_success(self):
+        self.assertEqual(self.run_collect(lambda u, h: (304, {}, b''))['sources']['official']['last_error_code'], 'validation_error')
+        healthy = self.run_collect(lambda u, h: (200, {}, b'document'), 30)
+        self.assertIsNone(healthy['sources']['official']['last_error_code'])
+
     def test_documented_parliament_api_has_schema_validation(self):
         url = 'https://committees-api.parliament.uk/api/Publications/55076'
         transport = SourceTransport([{'url': url, 'adapter': 'parliament_api', 'expected_publication_id': 55076}])
